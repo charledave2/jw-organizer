@@ -44,6 +44,18 @@ export type OrganizerNote = {
   updated_at: string;
 };
 
+export type Reminder = {
+  id: number;
+  title: string;
+  reminder_date: string;
+  reminder_time: string;
+  category: 'Ministry' | 'Personal study' | 'Return visit' | 'Other';
+  details: string;
+  notification_id: string;
+  completed: number;
+  created_at: string;
+};
+
 let database: SQLite.SQLiteDatabase | null = null;
 
 export async function getDatabase() {
@@ -95,15 +107,80 @@ export async function getDatabase() {
         note_date TEXT NOT NULL DEFAULT '',
         updated_at TEXT NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS reminders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        reminder_date TEXT NOT NULL,
+        reminder_time TEXT NOT NULL,
+        category TEXT NOT NULL DEFAULT 'Other',
+        details TEXT NOT NULL DEFAULT '',
+        notification_id TEXT NOT NULL DEFAULT '',
+        completed INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS app_settings (
+        setting_key TEXT PRIMARY KEY NOT NULL,
+        setting_value TEXT NOT NULL
+      );
       INSERT OR IGNORE INTO timer_state (id, started_at_ms, elapsed_seconds) VALUES (1, NULL, 0);
+      INSERT OR IGNORE INTO app_settings (setting_key, setting_value) VALUES ('reminder_notifications_enabled', '1');
     `);
   }
   return database;
 }
 
+export async function getReminders() {
+  const db = await getDatabase();
+  return db.getAllAsync<Reminder>('SELECT * FROM reminders ORDER BY completed ASC, reminder_date ASC, reminder_time ASC');
+}
+
+export async function saveReminder(reminder: Omit<Reminder, 'id' | 'notification_id' | 'completed' | 'created_at'>, id?: number) {
+  const db = await getDatabase();
+  const createdAt = new Date().toISOString();
+  if (id) {
+    await db.runAsync('UPDATE reminders SET title = ?, reminder_date = ?, reminder_time = ?, category = ?, details = ?, notification_id = "" WHERE id = ?', reminder.title, reminder.reminder_date, reminder.reminder_time, reminder.category, reminder.details, id);
+    return db.getFirstAsync<Reminder>('SELECT * FROM reminders WHERE id = ?', id);
+  }
+  const result = await db.runAsync('INSERT INTO reminders (title, reminder_date, reminder_time, category, details, created_at) VALUES (?, ?, ?, ?, ?, ?)', reminder.title, reminder.reminder_date, reminder.reminder_time, reminder.category, reminder.details, createdAt);
+  return db.getFirstAsync<Reminder>('SELECT * FROM reminders WHERE id = ?', result.lastInsertRowId);
+}
+
+export async function setReminderNotificationId(id: number, notificationId: string) {
+  const db = await getDatabase();
+  await db.runAsync('UPDATE reminders SET notification_id = ? WHERE id = ?', notificationId, id);
+}
+
+export async function setReminderCompleted(id: number, completed: boolean) {
+  const db = await getDatabase();
+  await db.runAsync('UPDATE reminders SET completed = ?, notification_id = CASE WHEN ? = 1 THEN ? ELSE notification_id END WHERE id = ?', completed ? 1 : 0, completed ? 1 : 0, '', id);
+  return getReminders();
+}
+
+export async function removeReminder(id: number) {
+  const db = await getDatabase();
+  await db.runAsync('DELETE FROM reminders WHERE id = ?', id);
+  return getReminders();
+}
+
+export async function getAppSetting(key: string, defaultValue = '') {
+  const db = await getDatabase();
+  const row = await db.getFirstAsync<{ setting_value: string }>('SELECT setting_value FROM app_settings WHERE setting_key = ?', key);
+  return row?.setting_value ?? defaultValue;
+}
+
+export async function setAppSetting(key: string, value: string) {
+  const db = await getDatabase();
+  await db.runAsync('INSERT INTO app_settings (setting_key, setting_value) VALUES (?, ?) ON CONFLICT(setting_key) DO UPDATE SET setting_value = excluded.setting_value', key, value);
+}
+
 export async function getOrganizerNotes(category: NoteCategory) {
   const db = await getDatabase();
   return db.getAllAsync<OrganizerNote>('SELECT * FROM organizer_notes WHERE category = ? ORDER BY note_date DESC, updated_at DESC', category);
+}
+
+export async function getAllOrganizerNotes() {
+  const db = await getDatabase();
+  return db.getAllAsync<OrganizerNote>('SELECT * FROM organizer_notes ORDER BY note_date DESC, updated_at DESC');
 }
 
 export async function saveOrganizerNote(note: Omit<OrganizerNote, 'id' | 'updated_at'>, id?: number) {
