@@ -4,10 +4,12 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getMinistryRecords, MinistryRecord, removeMinistryRecord, saveMinistryRecord } from '../data/database';
 import { colors, spacing } from '../ui/theme';
+import { FilterRow, SearchInput } from '../ui/SearchFilters';
 
 type RecordType = MinistryRecord['record_type'];
 const blank = (type: RecordType) => ({ record_type:type, name:'', location:'', contact:'', material:'', progress:'', notes:'', next_date:'' });
 const dateLabel = (key: string) => { if (!key) return 'Walang naka-schedule na follow-up'; const [y,m,d] = key.split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString('fil-PH',{month:'short',day:'numeric',year:'numeric'}); };
+const localTodayKey = () => { const date=new Date(); return `${date.getFullYear()}-${`${date.getMonth()+1}`.padStart(2,'0')}-${`${date.getDate()}`.padStart(2,'0')}`; };
 
 export default function RecordsScreen() {
   const [type,setType]=useState<RecordType>('Bible study');
@@ -16,16 +18,26 @@ export default function RecordsScreen() {
   const [editing,setEditing]=useState<MinistryRecord|null>(null);
   const [form,setForm]=useState(blank('Bible study'));
   const [error,setError]=useState('');
+  const [query,setQuery]=useState('');
+  const [filter,setFilter]=useState<'all'|'followup'|'overdue'|'unscheduled'>('all');
   const refresh=useCallback(async()=>setItems(await getMinistryRecords(type)),[type]);
   useEffect(()=>{refresh();},[refresh]);
   const add=()=>{setEditing(null);setForm(blank(type));setError('');setVisible(true);};
   const edit=(item:MinistryRecord)=>{setEditing(item);setForm({record_type:item.record_type,name:item.name,location:item.location,contact:item.contact,material:item.material,progress:item.progress,notes:item.notes,next_date:item.next_date});setError('');setVisible(true);};
   const save=async()=>{if(!form.name.trim()){setError('Ilagay ang pangalan.');return;}if(form.next_date&&!/^\d{4}-\d{2}-\d{2}$/.test(form.next_date)){setError('Gamitin ang petsang YYYY-MM-DD.');return;}await saveMinistryRecord({...form,name:form.name.trim()},editing?.id);setItems(await getMinistryRecords(type));setVisible(false);};
   const field=(label:string,key:keyof typeof form,placeholder:string,multiline=false)=><View><Text style={styles.label}>{label}</Text><TextInput placeholder={placeholder} placeholderTextColor={colors.muted} value={form[key]} onChangeText={(v)=>setForm({...form,[key]:v})} style={[styles.input,multiline&&styles.multiline]} multiline={multiline}/></View>;
+  const visibleItems=items.filter((item)=>{
+    const q=query.trim().toLocaleLowerCase();
+    const matchesQuery=!q||[item.name,item.location,item.contact,item.material,item.progress,item.notes].some((value)=>value.toLocaleLowerCase().includes(q));
+    const overdue=Boolean(item.next_date)&&new Date(`${item.next_date}T00:00:00`).getTime()<new Date(`${localTodayKey()}T00:00:00`).getTime();
+    const matchesFilter=filter==='all'||(filter==='followup'&&Boolean(item.next_date)&&!overdue)||(filter==='overdue'&&overdue)||(filter==='unscheduled'&&!item.next_date);
+    return matchesQuery&&matchesFilter;
+  });
   return <SafeAreaView style={styles.safe} edges={['top']}><ScrollView contentContainerStyle={styles.content}>
     <View style={styles.header}><View><Text style={styles.heading}>Records</Text><Text style={styles.subtitle}>Mga Bible study at return visit mo.</Text></View><Pressable accessibilityLabel="Magdagdag ng record" onPress={add} style={styles.addButton}><Ionicons name="add" size={22} color={colors.surface}/></Pressable></View>
     <View style={styles.tabs}>{(['Bible study','Return visit'] as const).map((value)=><Pressable key={value} onPress={()=>setType(value)} style={[styles.tab,type===value&&styles.tabActive]}><Text style={[styles.tabText,type===value&&styles.tabTextActive]}>{value==='Bible study'?'Bible studies':'Return visits'}</Text></Pressable>)}</View>
-    {items.length?items.map((item)=><Pressable key={item.id} onPress={()=>edit(item)} style={styles.card}><View style={styles.personIcon}><Ionicons name={type==='Bible study'?'book-outline':'chatbubble-ellipses-outline'} size={19} color={colors.green}/></View><View style={styles.cardBody}><Text style={styles.name}>{item.name}</Text><Text style={styles.meta}>{item.location||'Walang lokasyong inilagay'}</Text><Text style={styles.follow}>{dateLabel(item.next_date)}</Text>{item.record_type==='Bible study'&&item.material?<Text style={styles.extra}>{item.material}{item.progress?` · ${item.progress}`:''}</Text>:null}{item.notes?<Text style={styles.note} numberOfLines={2}>{item.notes}</Text>:null}</View><Pressable accessibilityLabel={`Burahin si ${item.name}`} onPress={async(e:any)=>{e.stopPropagation?.();await removeMinistryRecord(item.id);refresh();}} style={styles.delete}><Ionicons name="trash-outline" size={17} color={colors.muted}/></Pressable></Pressable>):<View style={styles.empty}><Ionicons name={type==='Bible study'?'book-outline':'chatbubble-ellipses-outline'} size={26} color={colors.green}/><Text style={styles.emptyTitle}>Wala pang {type==='Bible study'?'Bible study':'return visit'}</Text><Text style={styles.meta}>I-tap ang + para magdagdag ng record.</Text></View>}
+    <SearchInput value={query} onChangeText={setQuery} placeholder="Maghanap ng tao o paksa"/><FilterRow options={[{value:'all',label:'Lahat'},{value:'followup',label:'May follow-up'},{value:'overdue',label:'Na-late'},{value:'unscheduled',label:'Walang petsa'}]} value={filter} onChange={setFilter}/>
+    {visibleItems.length?visibleItems.map((item)=><Pressable key={item.id} onPress={()=>edit(item)} style={styles.card}><View style={styles.personIcon}><Ionicons name={type==='Bible study'?'book-outline':'chatbubble-ellipses-outline'} size={19} color={colors.green}/></View><View style={styles.cardBody}><Text style={styles.name}>{item.name}</Text><Text style={styles.meta}>{item.location||'Walang lokasyong inilagay'}</Text><Text style={styles.follow}>{dateLabel(item.next_date)}</Text>{item.record_type==='Bible study'&&item.material?<Text style={styles.extra}>{item.material}{item.progress?` · ${item.progress}`:''}</Text>:null}{item.notes?<Text style={styles.note} numberOfLines={2}>{item.notes}</Text>:null}</View><Pressable accessibilityLabel={`Burahin si ${item.name}`} onPress={async(e:any)=>{e.stopPropagation?.();await removeMinistryRecord(item.id);refresh();}} style={styles.delete}><Ionicons name="trash-outline" size={17} color={colors.muted}/></Pressable></Pressable>):<View style={styles.empty}><Ionicons name={type==='Bible study'?'book-outline':'chatbubble-ellipses-outline'} size={26} color={colors.green}/><Text style={styles.emptyTitle}>{query||filter!=='all'?'Walang tugma':`Wala pang ${type==='Bible study'?'Bible study':'return visit'}`}</Text><Text style={styles.meta}>{query||filter!=='all'?'Subukan ang ibang salita o filter.':'I-tap ang + para magdagdag ng record.'}</Text></View>}
     <Text style={styles.privacy}><Ionicons name="lock-closed-outline" size={12} color={colors.muted}/>  Naka-save lang sa device mo</Text>
   </ScrollView>
   <Modal visible={visible} animationType="slide" transparent onRequestClose={()=>setVisible(false)}><View style={styles.backdrop}><View style={styles.sheet}><View style={styles.handle}/><View style={styles.sheetHeader}><Text style={styles.sheetTitle}>{editing?'I-edit ang record':`Bagong ${type==='Bible study'?'Bible study':'return visit'}`}</Text><Pressable onPress={()=>setVisible(false)}><Ionicons name="close" size={23} color={colors.ink}/></Pressable></View><ScrollView keyboardShouldPersistTaps="handled">

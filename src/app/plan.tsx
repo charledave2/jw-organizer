@@ -4,6 +4,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getPlanItems, PlanItem, removePlanItem, savePlanItem, togglePlanItem } from '../data/database';
 import { colors, spacing } from '../ui/theme';
+import { FilterRow, SearchInput } from '../ui/SearchFilters';
 
 const todayKey = () => { const d = new Date(); return `${d.getFullYear()}-${`${d.getMonth() + 1}`.padStart(2, '0')}-${`${d.getDate()}`.padStart(2, '0')}`; };
 const dateLabel = (key: string) => { if (!key) return ''; const [y, m, d] = key.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('fil-PH', { weekday: 'short', month: 'short', day: 'numeric' }); };
@@ -14,6 +15,8 @@ export default function PlanScreen() {
   const [visible, setVisible] = useState(false);
   const [form, setForm] = useState(blank());
   const [error, setError] = useState('');
+  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState<'all' | 'upcoming' | 'completed' | 'ministry' | 'study'>('all');
   const refresh = useCallback(async () => setItems(await getPlanItems()), []);
   useEffect(() => { refresh(); }, [refresh]);
   const save = async () => {
@@ -21,8 +24,10 @@ export default function PlanScreen() {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(form.plan_date)) { setError('Gamitin ang petsang YYYY-MM-DD.'); return; }
     setItems(await savePlanItem({ ...form, title: form.title.trim() })); setForm(blank()); setError(''); setVisible(false);
   };
-  const upcoming = items.filter((item) => !item.completed);
-  const completed = items.filter((item) => item.completed);
+  const searched = items.filter((item) => !query.trim() || `${item.title} ${item.notes} ${item.category}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
+  const filtered = searched.filter((item) => filter === 'all' || (filter === 'upcoming' ? !item.completed : filter === 'completed' ? Boolean(item.completed) : filter === 'ministry' ? item.category === 'Ministry' : item.category === 'Personal study'));
+  const upcoming = filtered.filter((item) => !item.completed);
+  const completed = filtered.filter((item) => item.completed);
   const renderItem = (item: PlanItem) => <View key={item.id} style={styles.card}>
     <Pressable onPress={async () => setItems(await togglePlanItem(item))} style={[styles.check, item.completed ? styles.checked : undefined]}><Ionicons name={item.completed ? 'checkmark' : 'ellipse-outline'} size={20} color={item.completed ? colors.surface : colors.green} /></Pressable>
     <View style={styles.cardBody}><Text style={[styles.cardTitle, item.completed ? styles.strike : undefined]}>{item.title}</Text><Text style={styles.meta}>{dateLabel(item.plan_date)}{item.plan_time ? ` · ${item.plan_time}` : ''} · {item.category}</Text>{item.notes ? <Text style={styles.note} numberOfLines={2}>{item.notes}</Text> : null}</View>
@@ -31,9 +36,13 @@ export default function PlanScreen() {
   return <SafeAreaView style={styles.safe} edges={['top']}><ScrollView contentContainerStyle={styles.content}>
     <View style={styles.header}><View><Text style={styles.heading}>Plan</Text><Text style={styles.subtitle}>Ayusin ang susunod mong ministry at personal study.</Text></View><Pressable accessibilityLabel="Magdagdag ng plano" onPress={() => { setForm(blank()); setError(''); setVisible(true); }} style={styles.addButton}><Ionicons name="add" size={22} color={colors.surface} /></Pressable></View>
     <View style={styles.summary}><View style={styles.summaryIcon}><Ionicons name="calendar-outline" size={20} color={colors.green} /></View><View><Text style={styles.summaryNumber}>{upcoming.length}</Text><Text style={styles.meta}>nakabinbing plano</Text></View></View>
+    <SearchInput value={query} onChangeText={setQuery} placeholder="Maghanap ng plano" />
+    <FilterRow options={[{value:'all',label:'Lahat'},{value:'upcoming',label:'Paparating'},{value:'completed',label:'Natapos'},{value:'ministry',label:'Ministry'},{value:'study',label:'Personal study'}]} value={filter} onChange={setFilter} />
+    {filter === 'all' || filter === 'upcoming' || filter === 'ministry' || filter === 'study' ? <>
     <Text style={styles.section}>Mga paparating</Text>
-    {upcoming.length ? upcoming.map(renderItem) : <View style={styles.empty}><Ionicons name="sparkles-outline" size={25} color={colors.green} /><Text style={styles.emptyTitle}>Wala pang plano</Text><Text style={styles.meta}>Magdagdag ng ministry session o personal study.</Text></View>}
-    {completed.length > 0 && <><Text style={[styles.section, { marginTop: 25 }]}>Natapos</Text>{completed.map(renderItem)}</>}
+    {upcoming.length ? upcoming.map(renderItem) : <View style={styles.empty}><Ionicons name="sparkles-outline" size={25} color={colors.green} /><Text style={styles.emptyTitle}>{query ? 'Walang tugma' : 'Wala pang plano'}</Text><Text style={styles.meta}>{query ? 'Subukan ang ibang salita o filter.' : 'Magdagdag ng ministry session o personal study.'}</Text></View>}
+    </> : null}
+    {(filter === 'all' || filter === 'completed') && completed.length > 0 && <><Text style={[styles.section, { marginTop: 25 }]}>Natapos</Text>{completed.map(renderItem)}</>}
     <Text style={styles.privacy}><Ionicons name="lock-closed-outline" size={12} color={colors.muted} />  Naka-save lang sa device mo</Text>
   </ScrollView>
   <Modal visible={visible} animationType="slide" transparent onRequestClose={() => setVisible(false)}><View style={styles.backdrop}><View style={styles.sheet}><View style={styles.handle}/><View style={styles.sheetHeader}><Text style={styles.sheetTitle}>Bagong plano</Text><Pressable onPress={() => setVisible(false)}><Ionicons name="close" size={23} color={colors.ink}/></Pressable></View>
