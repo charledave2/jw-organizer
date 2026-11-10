@@ -34,6 +34,16 @@ export type MinistryRecord = {
   updated_at: string;
 };
 
+export type NoteCategory = 'Midweek' | 'Weekend' | 'Journal' | 'Prompter';
+export type OrganizerNote = {
+  id: number;
+  category: NoteCategory;
+  title: string;
+  content: string;
+  note_date: string;
+  updated_at: string;
+};
+
 let database: SQLite.SQLiteDatabase | null = null;
 
 export async function getDatabase() {
@@ -77,10 +87,40 @@ export async function getDatabase() {
         next_date TEXT NOT NULL DEFAULT '',
         updated_at TEXT NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS organizer_notes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        category TEXT NOT NULL,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL DEFAULT '',
+        note_date TEXT NOT NULL DEFAULT '',
+        updated_at TEXT NOT NULL
+      );
       INSERT OR IGNORE INTO timer_state (id, started_at_ms, elapsed_seconds) VALUES (1, NULL, 0);
     `);
   }
   return database;
+}
+
+export async function getOrganizerNotes(category: NoteCategory) {
+  const db = await getDatabase();
+  return db.getAllAsync<OrganizerNote>('SELECT * FROM organizer_notes WHERE category = ? ORDER BY note_date DESC, updated_at DESC', category);
+}
+
+export async function saveOrganizerNote(note: Omit<OrganizerNote, 'id' | 'updated_at'>, id?: number) {
+  const db = await getDatabase();
+  const updatedAt = new Date().toISOString();
+  if (id) {
+    await db.runAsync('UPDATE organizer_notes SET category = ?, title = ?, content = ?, note_date = ?, updated_at = ? WHERE id = ?', note.category, note.title, note.content, note.note_date, updatedAt, id);
+  } else {
+    await db.runAsync('INSERT INTO organizer_notes (category, title, content, note_date, updated_at) VALUES (?, ?, ?, ?, ?)', note.category, note.title, note.content, note.note_date, updatedAt);
+  }
+  return getOrganizerNotes(note.category);
+}
+
+export async function removeOrganizerNote(id: number, category: NoteCategory) {
+  const db = await getDatabase();
+  await db.runAsync('DELETE FROM organizer_notes WHERE id = ?', id);
+  return getOrganizerNotes(category);
 }
 
 export async function getPlanItems() {
