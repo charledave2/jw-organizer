@@ -1,7 +1,8 @@
+import { AppText as Text } from './AppText';
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { ThemeColors, useAppTheme } from './theme';
 
 function parseDate(value: string) {

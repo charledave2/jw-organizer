@@ -1,5 +1,6 @@
+import { AppText as Text } from '../ui/AppText';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Image, Pressable, StyleSheet, View } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
@@ -10,6 +11,11 @@ import { BiometricGate } from '../ui/BiometricGate';
 import { AppUpdateManager } from '../ui/AppUpdateCard';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Notifications from 'expo-notifications';
+import { useFonts } from '@expo-google-fonts/google-sans/useFonts';
+import { GoogleSans_400Regular } from '@expo-google-fonts/google-sans/400Regular';
+import { GoogleSans_500Medium } from '@expo-google-fonts/google-sans/500Medium';
+import { GoogleSans_600SemiBold } from '@expo-google-fonts/google-sans/600SemiBold';
+import { GoogleSans_700Bold } from '@expo-google-fonts/google-sans/700Bold';
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -39,6 +45,8 @@ function AnimatedSplash() {
 function AppTabs() {
   const { colors, mode } = useAppTheme();
   const insets = useSafeAreaInsets();
+  const [fontsLoaded] = useFonts({ GoogleSans_400Regular, GoogleSans_500Medium, GoogleSans_600SemiBold, GoogleSans_700Bold });
+  if (!fontsLoaded) return null;
   return <TrackerProvider>
     <BiometricGate>
       <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
@@ -53,7 +61,12 @@ function AppTabs() {
           paddingBottom: Math.max(7, insets.bottom),
           backgroundColor: colors.surface,
           borderTopColor: colors.line,
-          elevation: 0,
+          borderTopWidth: 0,
+          elevation: 12,
+          shadowColor: '#101813',
+          shadowOffset: { width: 0, height: -5 },
+          shadowOpacity: mode === 'dark' ? 0.32 : 0.12,
+          shadowRadius: 12,
         },
         tabBarLabelStyle: { fontSize: 10, fontWeight: '600', marginTop: 1 },
         tabBarHideOnKeyboard: true,
@@ -83,5 +96,5 @@ const splashStyles = StyleSheet.create({
   image: { width: 146, height: 146 },
   appName: { marginTop: 22, color: '#FFFFFF', fontSize: 23, fontWeight: '700', letterSpacing: 0.2 },
   tagline: { marginTop: 6, color: '#D7E7DD', fontSize: 12, fontWeight: '500', letterSpacing: 0.4 },
-  homeTab: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', borderWidth: 4, marginTop: -15, elevation: 4 },
+  homeTab: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', borderWidth: 4, marginTop: -15, elevation: 8, shadowColor: '#101813', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.2, shadowRadius: 6, zIndex: 2 },
 });

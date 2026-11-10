@@ -1,7 +1,8 @@
+import { AppText as Text } from '../ui/AppText';
 import { useEffect, useMemo, useState } from 'react';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTracker } from '../state/TrackerContext';
 import { formatClock, formatDayLabel, formatDuration } from '../ui/format';

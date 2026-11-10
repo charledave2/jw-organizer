@@ -1,7 +1,8 @@
+import { AppText as Text } from './AppText';
 import { useCallback, useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import * as LocalAuthentication from 'expo-local-authentication';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getAppSetting, setAppSetting } from '../data/database';
 import { ThemeColors, useAppTheme } from './theme';

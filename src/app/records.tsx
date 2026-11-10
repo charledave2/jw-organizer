@@ -1,6 +1,7 @@
+import { AppText as Text, AppTextInput as TextInput } from '../ui/AppText';
 import { useCallback, useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getMinistryRecords, MinistryRecord, removeMinistryRecord, saveMinistryRecord } from '../data/database';
 import { ThemeColors, useAppTheme, spacing } from '../ui/theme';

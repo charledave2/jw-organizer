@@ -1,7 +1,9 @@
+import { AppText as Text } from './AppText';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, AppState, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, AppState, Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
+import * as Application from 'expo-application';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as IntentLauncher from 'expo-intent-launcher';
 import { ThemeColors, useAppTheme } from './theme';
@@ -10,6 +12,16 @@ const releasesApi = 'https://api.github.com/repos/charledave2/jw-organizer/relea
 const packageName = 'com.charledave.jworganizer';
 type Release = { tag_name: string; name: string; body?: string; assets: { name: string; browser_download_url: string }[] };
 type Update = Release & { buildNumber: number; apkUrl: string };
+
+function getInstalledBuild() {
+  const values = [
+    Application.nativeBuildVersion,
+    Constants.nativeBuildVersion,
+    Constants.expoConfig?.android?.versionCode?.toString(),
+  ];
+  const builds = values.map((value) => Number.parseInt(value ?? '', 10)).filter((value) => Number.isFinite(value) && value > 0);
+  return builds.length ? Math.max(...builds) : 1;
+}
 
 async function findUpdate(installedBuild: number): Promise<Update | null> {
   if (Platform.OS !== 'android') return null;
@@ -29,7 +41,7 @@ async function findUpdate(installedBuild: number): Promise<Update | null> {
 export function AppUpdateManager() {
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
-  const installedBuild = Number.parseInt(Constants.nativeBuildVersion ?? '1', 10) || 1;
+  const installedBuild = getInstalledBuild();
   const [update, setUpdate] = useState<Update | null>(null);
   const [visible, setVisible] = useState(false);
   const [checking, setChecking] = useState(true);
@@ -98,7 +110,7 @@ export function AppUpdateManager() {
 export function AppUpdateCard() {
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
-  const build = Number.parseInt(Constants.nativeBuildVersion ?? '1', 10) || 1;
+  const build = getInstalledBuild();
   return <View style={styles.card}><View style={styles.cardIcon}><Ionicons name="cloud-download-outline" size={19} color={colors.green}/></View><View style={{ flex: 1 }}><Text style={styles.cardTitle}>Automatic app updates</Text><Text style={styles.cardMessage}>New releases are checked when the app opens or returns to the foreground. Updates appear in a popup and download inside the app.</Text><Text style={styles.cardMeta}>Installed build: {build}</Text></View></View>;
 }
 

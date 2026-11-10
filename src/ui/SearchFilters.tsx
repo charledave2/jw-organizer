@@ -1,5 +1,6 @@
+import { AppText as Text, AppTextInput as TextInput } from './AppText';
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { ThemeColors, useAppTheme } from './theme';
 
 export function SearchInput({ value, onChangeText, placeholder = 'Search…' }: { value: string; onChangeText: (value: string) => void; placeholder?: string }) {

@@ -1,6 +1,7 @@
+import { AppText as Text, AppTextInput as TextInput } from '../ui/AppText';
 import { useCallback, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { Alert, Image, Linking, Modal, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Alert, Image, Linking, Modal, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Notifications from 'expo-notifications';
