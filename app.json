@@ -7,7 +7,8 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/splash-blank.png",
+      "imageWidth": 1,
       "resizeMode": "contain",
       "backgroundColor": "#315E4B"
     },
@@ -15,6 +16,15 @@
     "plugins": [
       "expo-router",
       "expo-sqlite",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-blank.png",
+          "imageWidth": 1,
+          "resizeMode": "contain",
+          "backgroundColor": "#315E4B"
+        }
+      ],
       [
         "expo-notifications",
         {
@@ -33,7 +43,9 @@
     },
     "android": {
       "package": "com.charledave.jworganizer",
+      "versionCode": 1,
       "allowBackup": true,
+      "permissions": ["android.permission.REQUEST_INSTALL_PACKAGES"],
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "backgroundColor": "#315E4B",
