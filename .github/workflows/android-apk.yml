@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   build:
-    name: Build installable debug APK
+    name: Build installable APK
     runs-on: ubuntu-latest
     steps:
       - name: Check out source
@@ -37,14 +37,14 @@ jobs:
       - name: Generate Android project
         run: npx expo prebuild --platform android --clean --non-interactive
 
-      - name: Build APK
+      - name: Build optimized APK with bundled JavaScript
         working-directory: android
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleRelease
 
       - name: Save APK as workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: jw-organizer-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: jw-organizer-installable-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 30
