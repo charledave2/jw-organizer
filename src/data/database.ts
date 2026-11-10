@@ -16,7 +16,7 @@ export type PlanItem = {
   title: string;
   plan_date: string;
   plan_time: string;
-  category: 'Ministry' | 'Personal study';
+  category: 'Ministry' | 'Personal study' | 'Bible reading';
   notes: string;
   completed: number;
 };
