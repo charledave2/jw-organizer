@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Image, StyleSheet, View } from 'react-native';
+import { Animated, Easing, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
@@ -7,7 +7,10 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { TrackerProvider } from '../state/TrackerContext';
 import { AppThemeProvider, useAppTheme } from '../ui/theme';
 import { BiometricGate } from '../ui/BiometricGate';
+import * as SplashScreen from 'expo-splash-screen';
 import * as Notifications from 'expo-notifications';
+
+void SplashScreen.preventAutoHideAsync();
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }),
@@ -19,6 +22,7 @@ function AnimatedSplash() {
   const scale = useRef(new Animated.Value(0.68)).current;
   const opacity = useRef(new Animated.Value(1)).current;
   useEffect(() => {
+    void SplashScreen.hideAsync();
     Animated.sequence([
       Animated.spring(scale, { toValue: 1, damping: 8, stiffness: 120, useNativeDriver: true }),
       Animated.delay(430),
@@ -27,7 +31,7 @@ function AnimatedSplash() {
   }, [opacity, scale]);
   if (!visible) return null;
   return <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, splashStyles.container, { backgroundColor: colors.green, opacity }]}>
-    <Animated.View style={{ transform: [{ scale }] }}><Image source={require('../../assets/splash-icon.png')} style={splashStyles.image} resizeMode="contain" /></Animated.View>
+    <Animated.View style={{ alignItems: 'center', transform: [{ scale }] }}><Image source={require('../../assets/splash-icon.png')} style={splashStyles.image} resizeMode="contain" /><Text style={splashStyles.appName}>JW Organizer</Text><Text style={splashStyles.tagline}>Personal ministry organizer</Text></Animated.View>
   </Animated.View>;
 }
 
@@ -51,6 +55,7 @@ function AppTabs() {
         },
         tabBarLabelStyle: { fontSize: 10, fontWeight: '600', marginTop: 1 },
         tabBarHideOnKeyboard: true,
+        tabBarButton: ({ children, onPress, onLongPress, accessibilityLabel, accessibilityState, testID, style }) => <Pressable onPress={onPress} onLongPress={onLongPress} accessibilityRole="button" accessibilityLabel={accessibilityLabel} accessibilityState={accessibilityState} testID={testID} style={style} android_ripple={{ color: colors.greenSoft, borderless: true, radius: 27 }}>{children}</Pressable>,
       }}>
         <Tabs.Screen name="notes" options={{ title: 'Notes', tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'document-text' : 'document-text-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
         <Tabs.Screen name="records" options={{ title: 'Records', tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'people' : 'people-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
@@ -62,8 +67,8 @@ function AppTabs() {
         <Tabs.Screen name="reminders" options={{ href: null }} />
         <Tabs.Screen name="more" options={{ href: null }} />
       </Tabs>
-      <AnimatedSplash />
     </BiometricGate>
+    <AnimatedSplash />
   </TrackerProvider>;
 }
 
@@ -74,5 +79,7 @@ export default function RootLayout() {
 const splashStyles = StyleSheet.create({
   container: { zIndex: 99, alignItems: 'center', justifyContent: 'center' },
   image: { width: 146, height: 146 },
+  appName: { marginTop: 22, color: '#FFFFFF', fontSize: 23, fontWeight: '700', letterSpacing: 0.2 },
+  tagline: { marginTop: 6, color: '#D7E7DD', fontSize: 12, fontWeight: '500', letterSpacing: 0.4 },
   homeTab: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', borderWidth: 4, marginTop: -19, elevation: 4 },
 });

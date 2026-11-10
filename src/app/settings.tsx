@@ -13,6 +13,7 @@ import { createLocalBackup, getAppSetting, restoreLocalBackup, setAppSetting } f
 import { refreshScheduledReminders } from '../data/notifications';
 import { useTracker } from '../state/TrackerContext';
 import { ThemeColors, useAppTheme, spacing } from '../ui/theme';
+import { AppUpdateCard } from '../ui/AppUpdateCard';
 
 export default function SettingsScreen() {
   const { colors, mode, setMode } = useAppTheme();
@@ -169,6 +170,8 @@ export default function SettingsScreen() {
 
     <Text style={styles.section}>App</Text>
     <View style={styles.card}><View style={styles.row}><View style={styles.iconBox}><Ionicons name="leaf-outline" size={19} color={colors.green} /></View><View style={styles.rowBody}><Text style={styles.title}>JW Organizer</Text><Text style={styles.meta}>Bersyon 1.0.0 · Forest green</Text></View><Ionicons name="checkmark-circle" size={19} color={colors.green} /></View></View>
+    <Text style={styles.section}>App updates</Text>
+    <AppUpdateCard />
     <Text style={styles.privacy}>JW Organizer · Ginawa para sa personal na paggamit</Text>
   </ScrollView>
   <Modal visible={profileEditorOpen} animationType="slide" transparent onRequestClose={() => setProfileEditorOpen(false)}>
