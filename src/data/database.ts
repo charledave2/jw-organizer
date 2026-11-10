@@ -168,6 +168,46 @@ export async function getAppSetting(key: string, defaultValue = '') {
   return row?.setting_value ?? defaultValue;
 }
 
+const backupTables = ['service_sessions', 'timer_state', 'plan_items', 'ministry_records', 'organizer_notes', 'reminders', 'app_settings'] as const;
+const backupColumns: Record<(typeof backupTables)[number], string[]> = {
+  service_sessions: ['id','service_date','started_at','duration_seconds','placements','videos','return_visits','bible_studies'],
+  timer_state: ['id','started_at_ms','elapsed_seconds'],
+  plan_items: ['id','title','plan_date','plan_time','category','notes','completed'],
+  ministry_records: ['id','record_type','name','location','contact','material','progress','notes','next_date','updated_at'],
+  organizer_notes: ['id','category','title','content','note_date','updated_at'],
+  reminders: ['id','title','reminder_date','reminder_time','category','details','notification_id','completed','created_at'],
+  app_settings: ['setting_key','setting_value'],
+};
+
+export async function createLocalBackup() {
+  const db = await getDatabase();
+  const tables: Record<string, unknown[]> = {};
+  for (const table of backupTables) tables[table] = await db.getAllAsync(`SELECT * FROM ${table}`);
+  return { format: 'jw-organizer-backup', version: 1, createdAt: new Date().toISOString(), tables };
+}
+
+export async function restoreLocalBackup(value: unknown) {
+  const backup = value as { format?: string; version?: number; tables?: Record<string, unknown[]> };
+  if (backup?.format !== 'jw-organizer-backup' || backup.version !== 1 || !backup.tables) throw new Error('Hindi valid na JW Organizer backup file.');
+  const db = await getDatabase();
+  await db.withTransactionAsync(async () => {
+    for (const table of backupTables) {
+      const rows = backup.tables?.[table];
+      if (!Array.isArray(rows)) throw new Error(`Kulang ang backup data: ${table}`);
+      await db.runAsync(`DELETE FROM ${table}`);
+      const columns = backupColumns[table];
+      for (const raw of rows) {
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('May maling record sa backup file.');
+        const row = raw as Record<string, unknown>;
+        const present = columns.filter((column) => Object.prototype.hasOwnProperty.call(row, column));
+        if (present.length !== columns.length) throw new Error(`May kulang na field sa ${table}.`);
+        const placeholders = present.map(() => '?').join(', ');
+        await db.runAsync(`INSERT INTO ${table} (${present.join(', ')}) VALUES (${placeholders})`, ...present.map((column) => row[column] as SQLite.SQLiteBindValue));
+      }
+    }
+  });
+}
+
 export async function setAppSetting(key: string, value: string) {
   const db = await getDatabase();
   await db.runAsync('INSERT INTO app_settings (setting_key, setting_value) VALUES (?, ?) ON CONFLICT(setting_key) DO UPDATE SET setting_value = excluded.setting_value', key, value);
