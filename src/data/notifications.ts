@@ -7,7 +7,7 @@ export const REMINDER_CHANNEL_ID = 'reminders';
 export async function configureReminderChannel() {
   if (Platform.OS !== 'android') return;
   await Notifications.setNotificationChannelAsync(REMINDER_CHANNEL_ID, {
-    name: 'Mga paalala',
+    name: 'Reminders',
     importance: Notifications.AndroidImportance.HIGH,
     vibrationPattern: [0, 250, 180, 250],
     lightColor: '#315E4B',

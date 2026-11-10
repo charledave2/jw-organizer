@@ -188,19 +188,19 @@ export async function createLocalBackup() {
 
 export async function restoreLocalBackup(value: unknown) {
   const backup = value as { format?: string; version?: number; tables?: Record<string, unknown[]> };
-  if (backup?.format !== 'jw-organizer-backup' || backup.version !== 1 || !backup.tables) throw new Error('Hindi valid na JW Organizer backup file.');
+  if (backup?.format !== 'jw-organizer-backup' || backup.version !== 1 || !backup.tables) throw new Error('Invalid JW Organizer backup file.');
   const db = await getDatabase();
   await db.withTransactionAsync(async () => {
     for (const table of backupTables) {
       const rows = backup.tables?.[table];
-      if (!Array.isArray(rows)) throw new Error(`Kulang ang backup data: ${table}`);
+      if (!Array.isArray(rows)) throw new Error(`Missing backup data: ${table}`);
       await db.runAsync(`DELETE FROM ${table}`);
       const columns = backupColumns[table];
       for (const raw of rows) {
-        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('May maling record sa backup file.');
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('The backup file contains an invalid record.');
         const row = raw as Record<string, unknown>;
         const present = columns.filter((column) => Object.prototype.hasOwnProperty.call(row, column));
-        if (present.length !== columns.length) throw new Error(`May kulang na field sa ${table}.`);
+        if (present.length !== columns.length) throw new Error(`Missing field in ${table}.`);
         const placeholders = present.map(() => '?').join(', ');
         await db.runAsync(`INSERT INTO ${table} (${present.join(', ')}) VALUES (${placeholders})`, ...present.map((column) => row[column] as SQLite.SQLiteBindValue));
       }
