@@ -72,7 +72,7 @@ export default function NotesScreen() {
   const sectionNotes = notes.filter((item) => section === 'My Journal' ? item.category === 'Journal' : section === 'Prompter' ? item.category === 'Prompter' : section === 'Calendar' ? item.note_date === selectedDate : (item.category === 'Midweek' || item.category === 'Weekend') && (category === 'All' || item.category === category));
   const filteredNotes = sectionNotes.filter((item) => !query.trim() || `${item.title} ${item.content} ${item.category}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
 
-  return <SafeAreaView style={styles.safe} edges={['top']}>
+  return <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <View style={styles.header}><View><Text style={styles.heading}>Notes</Text><Text style={styles.subtitle}>Mga tala, journal, at prompter mo.</Text></View><Pressable accessibilityLabel="Gumawa ng tala" onPress={openNew} style={styles.addButton}><Ionicons name="add" size={22} color={colors.surface} /></Pressable></View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryRow}>{(['Notes','Calendar','My Journal','Prompter'] as NotesSection[]).map((item) => <Pressable key={item} onPress={() => setSection(item)} style={[styles.categoryPill, section === item && styles.categoryPillActive]}><Text style={[styles.categoryText, section === item && styles.categoryTextActive]}>{item}</Text></Pressable>)}</ScrollView>

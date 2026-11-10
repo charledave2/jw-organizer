@@ -15,7 +15,7 @@ export default function MoreScreen() {
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
   const router = useRouter();
-  return <SafeAreaView style={styles.safe} edges={['top']}><ScrollView contentContainerStyle={styles.content}>
+  return <SafeAreaView style={styles.safe} edges={['top', 'bottom']}><ScrollView contentContainerStyle={styles.content}>
     <View style={styles.header}><Text style={styles.heading}>More</Text><Text style={styles.subtitle}>Iba pang tool para sa organizer mo.</Text></View>
     <View style={styles.grid}>{tools.map((tool) => <Pressable key={tool.route} onPress={() => router.push(tool.route)} style={styles.card}>
       <View style={styles.iconBox}><Ionicons name={tool.icon} size={20} color={colors.green} /></View><View style={styles.cardBody}><Text style={styles.title}>{tool.title}</Text><Text style={styles.description}>{tool.subtitle}</Text></View><Ionicons name="chevron-forward" size={17} color={colors.muted} />

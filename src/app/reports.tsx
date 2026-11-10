@@ -32,7 +32,7 @@ export default function ReportsScreen() {
   }), { seconds: 0, placements: 0, videos: 0, returnVisits: 0, bibleStudies: 0 });
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}><Text style={styles.heading}>Report</Text></View>
         <View style={styles.monthSelector}><Pressable accessibilityLabel="Previous month" onPress={() => setMonthOffset(monthOffset - 1)} style={styles.monthArrow}><Ionicons name="chevron-back" size={17} color={colors.ink} /></Pressable><Text style={styles.monthLabel}>{monthName}</Text><Pressable accessibilityLabel="Next month" onPress={() => setMonthOffset(monthOffset + 1)} style={styles.monthArrow}><Ionicons name="chevron-forward" size={17} color={colors.ink} /></Pressable></View>

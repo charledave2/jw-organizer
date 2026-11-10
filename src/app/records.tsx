@@ -36,7 +36,7 @@ export default function RecordsScreen() {
     const matchesFilter=filter==='all'||(filter==='followup'&&Boolean(item.next_date)&&!overdue)||(filter==='overdue'&&overdue)||(filter==='unscheduled'&&!item.next_date);
     return matchesQuery&&matchesFilter;
   });
-  return <SafeAreaView style={styles.safe} edges={['top']}><ScrollView contentContainerStyle={styles.content}>
+  return <SafeAreaView style={styles.safe} edges={['top', 'bottom']}><ScrollView contentContainerStyle={styles.content}>
     <View style={styles.header}><View><Text style={styles.heading}>Records</Text><Text style={styles.subtitle}>Mga Bible study at return visit mo.</Text></View><Pressable accessibilityLabel="Magdagdag ng record" onPress={add} style={styles.addButton}><Ionicons name="add" size={22} color={colors.surface}/></Pressable></View>
     <View style={styles.tabs}>{(['Bible study','Return visit'] as const).map((value)=><Pressable key={value} onPress={()=>setType(value)} style={[styles.tab,type===value&&styles.tabActive]}><Text style={[styles.tabText,type===value&&styles.tabTextActive]}>{value==='Bible study'?'Bible studies':'Return visits'}</Text></Pressable>)}</View>
     <SearchInput value={query} onChangeText={setQuery} placeholder="Maghanap ng tao o paksa"/><FilterRow options={[{value:'all',label:'Lahat'},{value:'followup',label:'May follow-up'},{value:'overdue',label:'Na-late'},{value:'unscheduled',label:'Walang petsa'}]} value={filter} onChange={setFilter}/>

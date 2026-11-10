@@ -36,7 +36,7 @@ export default function CalendarScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}><Text style={styles.heading}>Calendar</Text><Pressable accessibilityLabel="Go to today" onPress={() => { setVisibleMonth(new Date(new Date().getFullYear(), new Date().getMonth(), 1)); setSelectedDate(localDateKey()); }} style={styles.todayButton}><Text style={styles.todayText}>Today</Text></Pressable></View>
         <View style={styles.calendarCard}>

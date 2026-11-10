@@ -82,7 +82,7 @@ export default function RemindersScreen() {
   };
   const remove = async (item: Reminder) => { await cancelReminderNotification(item.notification_id); await removeReminder(item.id); await refresh(); };
 
-  return <SafeAreaView style={styles.safe} edges={['top']}>
+  return <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
     <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
       <View style={styles.header}><View style={{ flex: 1 }}><Text style={styles.heading}>Reminders</Text><Text style={styles.subtitle}>Mga lokal na alert para sa mahalagang gagawin.</Text></View><Pressable accessibilityLabel="Magdagdag ng paalala" onPress={openNew} style={styles.addButton}><Ionicons name="add" size={22} color={colors.surface} /></Pressable></View>
       <SearchInput value={query} onChangeText={setQuery} placeholder="Maghanap ng paalala" />
