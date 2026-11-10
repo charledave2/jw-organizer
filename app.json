@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -21,13 +21,19 @@
           "defaultChannel": "reminders",
           "enableRemoteNotifications": false
         }
-      ]
+      ],
+      [
+        "expo-local-authentication",
+        { "faceIDPermission": "Allow JW Organizer to use Face ID." }
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "package": "com.charledave.jworganizer",
+      "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "backgroundColor": "#315E4B",
         "foregroundImage": "./assets/android-icon-foreground.png",
