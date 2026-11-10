@@ -22,7 +22,7 @@ export function DateField({ label, value, onChange }: { label: string; value: st
     setOpen(false);
     if (event.type === 'set' && selected) onChange(dateKey(selected));
   };
-  return <View style={styles.field}><Text style={styles.label}>{label}</Text><Pressable accessibilityRole="button" accessibilityLabel={`Pumili ng petsa para sa ${label}`} onPress={() => setOpen(true)} style={styles.button}><Ionicons name="calendar-outline" size={17} color={colors.green}/><Text style={[styles.value, !value && styles.placeholder]}>{value ? current.toLocaleDateString('fil-PH', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Pumili ng petsa'}</Text><Ionicons name="chevron-down" size={15} color={colors.muted}/></Pressable>{open ? <DateTimePicker value={current} mode="date" display="default" onChange={onPickerChange} /> : null}</View>;
+  return <View style={styles.field}><Text style={styles.label}>{label}</Text><Pressable accessibilityRole="button" accessibilityLabel={`Choose a date for ${label}`} onPress={() => setOpen(true)} style={styles.button}><Ionicons name="calendar-outline" size={17} color={colors.green}/><Text style={[styles.value, !value && styles.placeholder]}>{value ? current.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Choose a date'}</Text><Ionicons name="chevron-down" size={15} color={colors.muted}/></Pressable>{open ? <DateTimePicker value={current} mode="date" display="default" onChange={onPickerChange} /> : null}</View>;
 }
 
 export function TimeField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
@@ -35,7 +35,7 @@ export function TimeField({ label, value, onChange }: { label: string; value: st
     setOpen(false);
     if (event.type === 'set' && selected) onChange(`${`${selected.getHours()}`.padStart(2, '0')}:${`${selected.getMinutes()}`.padStart(2, '0')}`);
   };
-  return <View style={styles.field}><Text style={styles.label}>{label}</Text><Pressable accessibilityRole="button" accessibilityLabel={`Pumili ng oras para sa ${label}`} onPress={() => setOpen(true)} style={styles.button}><Ionicons name="time-outline" size={17} color={colors.green}/><Text style={styles.value}>{value || 'Pumili ng oras'}</Text><Ionicons name="chevron-down" size={15} color={colors.muted}/></Pressable>{open ? <DateTimePicker value={current} mode="time" display="default" onChange={onPickerChange} /> : null}</View>;
+  return <View style={styles.field}><Text style={styles.label}>{label}</Text><Pressable accessibilityRole="button" accessibilityLabel={`Choose a time for ${label}`} onPress={() => setOpen(true)} style={styles.button}><Ionicons name="time-outline" size={17} color={colors.green}/><Text style={styles.value}>{value || 'Choose a time'}</Text><Ionicons name="chevron-down" size={15} color={colors.muted}/></Pressable>{open ? <DateTimePicker value={current} mode="time" display="default" onChange={onPickerChange} /> : null}</View>;
 }
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({

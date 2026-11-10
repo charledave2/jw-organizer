@@ -15,8 +15,8 @@ export function BiometricGate({ children }: React.PropsWithChildren) {
 
   const authenticate = useCallback(async () => {
     const result = await LocalAuthentication.authenticateAsync({
-      promptMessage: 'I-unlock ang JW Organizer',
-      promptDescription: 'Gamitin ang fingerprint o face unlock para buksan ang app.',
+      promptMessage: 'Unlock JW Organizer',
+      promptDescription: 'Use fingerprint or face unlock to open the app.',
       cancelLabel: 'Kanselahin',
       biometricsSecurityLevel: 'weak',
     });
@@ -40,7 +40,7 @@ export function BiometricGate({ children }: React.PropsWithChildren) {
   if (!ready) return <SafeAreaView style={styles.lock}><ActivityIndicator color={colors.green} /></SafeAreaView>;
   if (unlocked) return <>{children}</>;
   const disableLock = async () => { await setAppSetting('biometric_enabled', '0'); setUnlocked(true); };
-  return <SafeAreaView style={styles.lock}><View style={styles.lockIcon}><Ionicons name="finger-print-outline" size={31} color={colors.green} /></View><Text style={styles.title}>Naka-lock ang app</Text><Text style={styles.subtitle}>I-authenticate para buksan ang JW Organizer.</Text><Pressable onPress={authenticate} style={styles.button}><Text style={styles.buttonText}>Subukan ulit</Text></Pressable>{canRecover ? <Pressable accessibilityRole="button" onPress={disableLock} style={styles.recovery}><Text style={styles.recoveryText}>I-off ang biometric lock</Text></Pressable> : null}</SafeAreaView>;
+  return <SafeAreaView style={styles.lock}><View style={styles.lockIcon}><Ionicons name="finger-print-outline" size={31} color={colors.green} /></View><Text style={styles.title}>App locked</Text><Text style={styles.subtitle}>Authenticate to open JW Organizer.</Text><Pressable onPress={authenticate} style={styles.button}><Text style={styles.buttonText}>Try again</Text></Pressable>{canRecover ? <Pressable accessibilityRole="button" onPress={disableLock} style={styles.recovery}><Text style={styles.recoveryText}>Turn off biometric lock</Text></Pressable> : null}</SafeAreaView>;
 }
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({

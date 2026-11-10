@@ -13,5 +13,5 @@ export function formatDuration(totalSeconds: number) {
 }
 
 export function formatDayLabel(isoDate: string) {
-  return new Date(`${isoDate}T12:00:00`).toLocaleDateString('fil-PH', { weekday: 'long', month: 'long', day: 'numeric' });
+  return new Date(`${isoDate}T12:00:00`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 }

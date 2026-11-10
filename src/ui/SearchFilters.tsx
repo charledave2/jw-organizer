@@ -2,13 +2,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { ThemeColors, useAppTheme } from './theme';
 
-export function SearchInput({ value, onChangeText, placeholder = 'Maghanap…' }: { value: string; onChangeText: (value: string) => void; placeholder?: string }) {
+export function SearchInput({ value, onChangeText, placeholder = 'Search…' }: { value: string; onChangeText: (value: string) => void; placeholder?: string }) {
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
   return <View style={styles.search}>
     <Ionicons name="search-outline" size={18} color={colors.muted} />
     <TextInput value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor={colors.muted} style={styles.input} returnKeyType="search" />
-    {value ? <Pressable accessibilityLabel="I-clear ang paghahanap" onPress={() => onChangeText('')}><Ionicons name="close-circle" size={18} color={colors.muted} /></Pressable> : null}
+    {value ? <Pressable accessibilityLabel="Clear search" onPress={() => onChangeText('')}><Ionicons name="close-circle" size={18} color={colors.muted} /></Pressable> : null}
   </View>;
 }
 

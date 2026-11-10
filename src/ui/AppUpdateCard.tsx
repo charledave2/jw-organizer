@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, AppState, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -8,116 +8,98 @@ import { ThemeColors, useAppTheme } from './theme';
 
 const releasesApi = 'https://api.github.com/repos/charledave2/jw-organizer/releases?per_page=100';
 const packageName = 'com.charledave.jworganizer';
-type Release = { tag_name: string; name: string; body?: string; html_url: string; assets: { name: string; browser_download_url: string; size: number }[] };
+type Release = { tag_name: string; name: string; body?: string; assets: { name: string; browser_download_url: string }[] };
+type Update = Release & { buildNumber: number; apkUrl: string };
+
+async function findUpdate(installedBuild: number): Promise<Update | null> {
+  if (Platform.OS !== 'android') return null;
+  const response = await fetch(releasesApi, { headers: { Accept: 'application/vnd.github+json' } });
+  if (!response.ok) throw new Error(`Update check failed (${response.status})`);
+  const releases = await response.json() as Release[];
+  const candidates = releases.flatMap((release) => {
+    const match = release.tag_name.match(/^build-(\d+)$/);
+    return match ? [{ release, buildNumber: Number(match[1]) }] : [];
+  }).sort((a, b) => b.buildNumber - a.buildNumber);
+  const latest = candidates[0];
+  if (!latest || latest.buildNumber <= installedBuild) return null;
+  const apk = latest.release.assets.find((asset) => asset.name.toLowerCase().endsWith('.apk'));
+  return apk ? { ...latest.release, buildNumber: latest.buildNumber, apkUrl: apk.browser_download_url } : null;
+}
+
+export function AppUpdateManager() {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
+  const installedBuild = Number.parseInt(Constants.nativeBuildVersion ?? '1', 10) || 1;
+  const [update, setUpdate] = useState<Update | null>(null);
+  const [visible, setVisible] = useState(false);
+  const [checking, setChecking] = useState(true);
+  const [downloading, setDownloading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [message, setMessage] = useState('');
+  const [downloadedUri, setDownloadedUri] = useState('');
+  const backgrounded = useRef(false);
+  const check = useCallback(async () => {
+    setChecking(true);
+    try {
+      const latest = await findUpdate(installedBuild);
+      setUpdate(latest);
+      if (latest) { setMessage('A new version is available. Update now, or choose Later to postpone until you reopen the app.'); setVisible(true); }
+      else { setMessage(''); setVisible(false); }
+    } catch { setMessage('Could not check for updates. The app will try again when opened.'); }
+    finally { setChecking(false); }
+  }, [installedBuild]);
+  useEffect(() => {
+    void check();
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') { backgrounded.current = true; return; }
+      if (backgrounded.current) { backgrounded.current = false; void check(); }
+    });
+    return () => subscription.remove();
+  }, [check]);
+
+  const install = async (uri: string) => {
+    try {
+      const contentUri = await FileSystem.getContentUriAsync(uri);
+      await IntentLauncher.startActivityAsync('android.intent.action.VIEW', { data: contentUri, type: 'application/vnd.android.package-archive', flags: 1 });
+      setMessage('Confirm the update in the Android installer.');
+    } catch {
+      setMessage('Allow JW Organizer to install unknown apps in Android settings, then return and try again.');
+      try { await IntentLauncher.startActivityAsync(IntentLauncher.ActivityAction.MANAGE_UNKNOWN_APP_SOURCES, { data: `package:${packageName}` }); } catch { /* Per-app settings may be unavailable on some devices. */ }
+    }
+  };
+  const download = async () => {
+    if (!update) return;
+    if (downloadedUri) { await install(downloadedUri); return; }
+    if (!FileSystem.cacheDirectory) { setMessage('A temporary download location is unavailable.'); return; }
+    setDownloading(true); setProgress(0); setMessage('Downloading update…');
+    const destination = `${FileSystem.cacheDirectory}jw-organizer-${update.tag_name}.apk`;
+    try {
+      await FileSystem.deleteAsync(destination, { idempotent: true });
+      const task = FileSystem.createDownloadResumable(update.apkUrl, destination, {}, (event) => { if (event.totalBytesExpectedToWrite > 0) setProgress(Math.round(event.totalBytesWritten / event.totalBytesExpectedToWrite * 100)); });
+      const result = await task.downloadAsync();
+      if (!result || result.status < 200 || result.status >= 300) throw new Error('APK download failed');
+      setDownloadedUri(result.uri); setMessage('Download complete. Confirm the update in Android installer.'); await install(result.uri);
+    } catch { setMessage('The update could not be downloaded. Check your connection and try again.'); }
+    finally { setDownloading(false); }
+  };
+  const later = () => setVisible(false);
+  return <Modal visible={visible} animationType="fade" transparent onRequestClose={later}><View style={styles.backdrop}><View style={styles.modal}>
+    <View style={styles.icon}><Ionicons name="cloud-download-outline" size={25} color={colors.green}/></View>
+    <Text style={styles.title}>JW Organizer update</Text>
+    <Text style={styles.version}>{update?.name || `Feature build ${update?.buildNumber ?? ''}`}</Text>
+    {!!update?.body?.trim() && <Text style={styles.notes}>{update.body.trim()}</Text>}
+    <Text style={styles.message}>{checking ? 'Checking for updates…' : downloading ? `Downloading in the app… ${progress}%` : message}</Text>
+    {downloading ? <View style={styles.progressTrack}><View style={[styles.progressFill, { width: `${progress}%` }]}/></View> : null}
+    <Pressable onPress={download} disabled={checking || downloading || !update} style={[styles.primary, (!update || checking || downloading) && styles.disabled]}>{checking || downloading ? <ActivityIndicator size="small" color={colors.surface}/> : <Ionicons name={downloadedUri ? 'download' : 'arrow-down-circle-outline'} size={18} color={colors.surface}/>}<Text style={styles.primaryText}>{downloading ? 'Downloading…' : downloadedUri ? 'Install update' : 'Update now'}</Text></Pressable>
+    <Pressable onPress={later} style={styles.later}><Text style={styles.laterText}>Later</Text></Pressable>
+  </View></View></Modal>;
+}
 
 export function AppUpdateCard() {
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
-  const installedBuild = Number.parseInt(Constants.nativeBuildVersion ?? '1', 10) || 1;
-  const [checking, setChecking] = useState(false);
-  const [downloading, setDownloading] = useState(false);
-  const [progress, setProgress] = useState<number | null>(null);
-  const [release, setRelease] = useState<(Release & { buildNumber: number; apkUrl: string }) | null>(null);
-  const [downloadedUri, setDownloadedUri] = useState('');
-  const [message, setMessage] = useState('');
-
-  const checkForUpdate = async () => {
-    setChecking(true); setMessage(''); setRelease(null); setDownloadedUri('');
-    try {
-      if (Platform.OS !== 'android') { setMessage('Android lang ang APK updater na ito.'); return; }
-      const response = await fetch(releasesApi, { headers: { Accept: 'application/vnd.github+json' } });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const items = await response.json() as Release[];
-      const builds = items.flatMap((item) => {
-        const match = item.tag_name.match(/^build-(\d+)$/);
-        return match ? [{ item, buildNumber: Number(match[1]) }] : [];
-      }).sort((a, b) => b.buildNumber - a.buildNumber);
-      const latestBuild = builds[0];
-      if (!latestBuild) { setMessage('Wala pang release build. Subukan muli mamaya.'); return; }
-      const { item: latest, buildNumber } = latestBuild;
-      const apk = latest.assets.find((asset) => asset.name.toLowerCase().endsWith('.apk'));
-      if (!buildNumber || !apk) { setMessage('Hindi makita ang installable APK sa pinakabagong release.'); return; }
-      if (buildNumber <= installedBuild) { setMessage('Naka-install na ang pinakabagong build.'); return; }
-      setRelease({ ...latest, buildNumber, apkUrl: apk.browser_download_url });
-      setMessage('May bagong feature build na puwede mong i-download.');
-    } catch { setMessage('Hindi ma-check ang updates. Tingnan ang internet connection at subukan ulit.'); }
-    finally { setChecking(false); }
-  };
-
-  const openInstaller = async (uri: string) => {
-    try {
-      const contentUri = await FileSystem.getContentUriAsync(uri);
-      await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
-        data: contentUri,
-        type: 'application/vnd.android.package-archive',
-        flags: 1,
-      });
-      setMessage('Buksan ang Android installer at kumpirmahin ang update.');
-    } catch {
-      setMessage('Payagan ang “Install unknown apps” para sa JW Organizer, bumalik dito, at pindutin ulit ang Install update.');
-      try { await IntentLauncher.startActivityAsync(IntentLauncher.ActivityAction.MANAGE_UNKNOWN_APP_SOURCES, { data: `package:${packageName}` }); } catch { /* Some Android builds do not expose the per-app setting screen. */ }
-    }
-  };
-
-  const downloadUpdate = async () => {
-    if (!release) return;
-    if (downloadedUri) { await openInstaller(downloadedUri); return; }
-    if (!FileSystem.cacheDirectory) { setMessage('Hindi makagawa ng temporary download sa device na ito.'); return; }
-    setDownloading(true); setProgress(0); setMessage('');
-    const destination = `${FileSystem.cacheDirectory}jw-organizer-${release.tag_name}.apk`;
-    try {
-      await FileSystem.deleteAsync(destination, { idempotent: true });
-      const task = FileSystem.createDownloadResumable(release.apkUrl, destination, {}, (event) => {
-        if (event.totalBytesExpectedToWrite > 0) setProgress(Math.round(event.totalBytesWritten / event.totalBytesExpectedToWrite * 100));
-      });
-      const result = await task.downloadAsync();
-      if (!result || result.status < 200 || result.status >= 300) throw new Error('APK download failed');
-      setDownloadedUri(result.uri);
-      setMessage('Tapos na ang download. Buksan ang Android installer para i-update ang app.');
-      await openInstaller(result.uri);
-    } catch { setMessage('Hindi na-download ang APK. Subukan ulit kapag maayos ang internet connection.'); }
-    finally { setDownloading(false); }
-  };
-
-  return <View style={styles.card}>
-    <View style={styles.headingRow}>
-      <View style={styles.icon}><Ionicons name="cloud-download-outline" size={19} color={colors.green} /></View>
-      <View style={styles.body}><Text style={styles.title}>App updates</Text><Text style={styles.meta}>Naka-install na build: {installedBuild}</Text></View>
-    </View>
-    <Text style={styles.description}>Tingnan at i-install ang mga bagong ARM64 feature build mula sa GitHub Releases.</Text>
-    <Pressable onPress={checkForUpdate} disabled={checking || downloading} style={styles.primary}>
-      {checking ? <ActivityIndicator size="small" color={colors.surface} /> : <Ionicons name="refresh" size={16} color={colors.surface} />}
-      <Text style={styles.primaryText}>{checking ? 'Tinitingnan…' : 'Tingnan kung may update'}</Text>
-    </Pressable>
-    {release ? <View style={styles.releaseBox}>
-      <Text style={styles.releaseTitle}>{release.name || `Feature build ${release.buildNumber}`}</Text>
-      {!!release.body?.trim() && <Text style={styles.releaseNotes} numberOfLines={4}>{release.body.trim()}</Text>}
-      {downloading && progress !== null ? <Text style={styles.progress}>Nagda-download… {progress}%</Text> : null}
-      <Pressable onPress={downloadUpdate} disabled={downloading} style={styles.secondary}>
-        {downloading ? <ActivityIndicator size="small" color={colors.green} /> : <Ionicons name={downloadedUri ? 'download' : 'arrow-down-circle-outline'} size={17} color={colors.green} />}
-        <Text style={styles.secondaryText}>{downloadedUri ? 'Install update' : downloading ? 'Nagda-download…' : 'I-download at i-install'}</Text>
-      </Pressable>
-    </View> : null}
-    {message ? <Text style={styles.message}>{message}</Text> : null}
-    {Platform.OS !== 'android' ? <Text style={styles.message}>Android lang ang APK updater na ito.</Text> : null}
-  </View>;
+  const build = Number.parseInt(Constants.nativeBuildVersion ?? '1', 10) || 1;
+  return <View style={styles.card}><View style={styles.cardIcon}><Ionicons name="cloud-download-outline" size={19} color={colors.green}/></View><View style={{ flex: 1 }}><Text style={styles.cardTitle}>Automatic app updates</Text><Text style={styles.cardMessage}>New releases are checked when the app opens or returns to the foreground. Updates appear in a popup and download inside the app.</Text><Text style={styles.cardMeta}>Installed build: {build}</Text></View></View>;
 }
 
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  card: { padding: 14, borderRadius: 18, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface },
-  headingRow: { flexDirection: 'row', alignItems: 'center', gap: 11 },
-  icon: { width: 39, height: 39, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.greenSoft },
-  body: { flex: 1 },
-  title: { fontSize: 13, fontWeight: '700', color: colors.ink },
-  meta: { fontSize: 11, color: colors.muted, marginTop: 4 },
-  description: { fontSize: 11, color: colors.muted, lineHeight: 16, marginTop: 11 },
-  primary: { minHeight: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, marginTop: 12, borderRadius: 13, backgroundColor: colors.green },
-  primaryText: { fontSize: 11, fontWeight: '700', color: colors.surface },
-  releaseBox: { padding: 12, marginTop: 12, borderRadius: 14, backgroundColor: colors.greenSoft },
-  releaseTitle: { fontSize: 12, fontWeight: '700', color: colors.ink },
-  releaseNotes: { fontSize: 11, lineHeight: 16, color: colors.muted, marginTop: 5 },
-  progress: { fontSize: 11, color: colors.greenDark, marginTop: 8 },
-  secondary: { minHeight: 39, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, marginTop: 10, borderRadius: 12, backgroundColor: colors.surface },
-  secondaryText: { fontSize: 11, fontWeight: '700', color: colors.greenDark },
-  message: { fontSize: 10, lineHeight: 15, color: colors.muted, marginTop: 9 },
-});
+const createStyles = (colors: ThemeColors) => StyleSheet.create({ backdrop:{flex:1,justifyContent:'center',padding:24,backgroundColor:'rgba(0,0,0,.48)'},modal:{padding:21,borderRadius:24,backgroundColor:colors.surface},icon:{width:49,height:49,borderRadius:17,alignItems:'center',justifyContent:'center',backgroundColor:colors.greenSoft,marginBottom:13},title:{fontSize:19,fontWeight:'700',color:colors.ink},version:{fontSize:12,fontWeight:'700',color:colors.green,marginTop:6},notes:{maxHeight:110,fontSize:11,lineHeight:16,color:colors.muted,marginTop:9},message:{fontSize:11,lineHeight:16,color:colors.muted,marginTop:11},progressTrack:{height:5,overflow:'hidden',borderRadius:3,backgroundColor:colors.line,marginTop:10},progressFill:{height:'100%',backgroundColor:colors.green},primary:{minHeight:47,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:8,marginTop:15,borderRadius:15,backgroundColor:colors.green},disabled:{opacity:.65},primaryText:{fontSize:13,fontWeight:'700',color:colors.surface},later:{minHeight:42,alignItems:'center',justifyContent:'center',marginTop:4},laterText:{fontSize:12,fontWeight:'700',color:colors.muted},card:{padding:14,borderRadius:18,borderWidth:1,borderColor:colors.line,backgroundColor:colors.surface,flexDirection:'row',alignItems:'flex-start',gap:11},cardIcon:{width:39,height:39,borderRadius:13,alignItems:'center',justifyContent:'center',backgroundColor:colors.greenSoft},cardTitle:{fontSize:13,fontWeight:'700',color:colors.ink},cardMessage:{fontSize:11,lineHeight:16,color:colors.muted,marginTop:5},cardMeta:{fontSize:10,color:colors.muted,marginTop:7} });
