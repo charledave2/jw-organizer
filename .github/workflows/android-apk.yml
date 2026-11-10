@@ -37,14 +37,15 @@ jobs:
       - name: Generate Android project
         run: npx expo prebuild --platform android --clean --non-interactive
 
-      - name: Build optimized APK with bundled JavaScript
+      - name: Build optimized ARM64 APK with bundled JavaScript
         working-directory: android
-        run: ./gradlew assembleRelease
+        # Exclude 32-bit ARM and x86 native libraries from the installable APK.
+        run: ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a
 
       - name: Save APK as workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: jw-organizer-installable-apk
+          name: jw-organizer-arm64-apk
           path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 30
