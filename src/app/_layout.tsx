@@ -30,6 +30,7 @@ export default function RootLayout() {
           <Tabs.Screen name="calendar" options={{ title: 'Calendar', tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'calendar' : 'calendar-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
           <Tabs.Screen name="plan" options={{ title: 'Plan', tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'checkbox' : 'checkbox-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
           <Tabs.Screen name="records" options={{ title: 'Records', tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'people' : 'people-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
+          <Tabs.Screen name="notes" options={{ title: 'Notes', tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'document-text' : 'document-text-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
           <Tabs.Screen name="reports" options={{ title: 'Report', tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'bar-chart' : 'bar-chart-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
         </Tabs>
       </TrackerProvider>
