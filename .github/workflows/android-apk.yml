@@ -9,7 +9,11 @@ on:
       - 'docs/**'
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: android-release-main
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -34,8 +38,44 @@ jobs:
       - name: Install JavaScript dependencies
         run: npm ci
 
+      - name: Set Android version code for this build
+        run: |
+          node -e 'const fs = require("fs"); const path = "app.json"; const config = JSON.parse(fs.readFileSync(path, "utf8")); config.expo.android.versionCode = Number(process.env.GITHUB_RUN_NUMBER); fs.writeFileSync(path, JSON.stringify(config, null, 2) + "\n");'
+
       - name: Generate Android project
         run: npx expo prebuild --platform android --clean --non-interactive
+
+      - name: Configure persistent Android release signing key
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [[ -z "$ANDROID_KEYSTORE_BASE64" || -z "$ANDROID_KEYSTORE_PASSWORD" || -z "$ANDROID_KEY_ALIAS" || -z "$ANDROID_KEY_PASSWORD" ]]; then
+            echo "::warning::Release signing secrets are not configured; this build will be saved as an artifact but not published as an in-app update."
+            echo "ANDROID_RELEASE_SIGNING_READY=false" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/jw-organizer-upload.jks"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/jw-organizer-upload.jks" >> "$GITHUB_ENV"
+          echo "ANDROID_KEYSTORE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_ALIAS=$ANDROID_KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_PASSWORD=$ANDROID_KEY_PASSWORD" >> "$GITHUB_ENV"
+          echo "ANDROID_RELEASE_SIGNING_READY=true" >> "$GITHUB_ENV"
+          node <<'NODE'
+          const fs = require('fs');
+          const file = 'android/app/build.gradle';
+          let gradle = fs.readFileSync(file, 'utf8');
+          const block = /    signingConfigs \{([\s\S]*?)\n    \}\n    buildTypes \{/;
+          if (!block.test(gradle)) throw new Error('Could not find Android signingConfigs in generated Gradle file.');
+          gradle = gradle.replace(block, (_match, configs) => `    signingConfigs {${configs}\n        upload {\n            storeFile file(System.getenv('ANDROID_KEYSTORE_PATH'))\n            storePassword System.getenv('ANDROID_KEYSTORE_PASSWORD')\n            keyAlias System.getenv('ANDROID_KEY_ALIAS')\n            keyPassword System.getenv('ANDROID_KEY_PASSWORD')\n        }\n    }\n    buildTypes {`);
+          const release = gradle.indexOf('        release {', gradle.indexOf('    buildTypes {'));
+          const signing = gradle.indexOf('signingConfig signingConfigs.debug', release);
+          if (release < 0 || signing < 0) throw new Error('Could not configure Android release signing.');
+          gradle = gradle.slice(0, signing) + 'signingConfig signingConfigs.upload' + gradle.slice(signing + 'signingConfig signingConfigs.debug'.length);
+          fs.writeFileSync(file, gradle);
+          NODE
 
       - name: Build optimized ARM64 APK with bundled JavaScript
         working-directory: android
@@ -49,3 +89,15 @@ jobs:
           path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 30
+
+      - name: Publish feature build to GitHub Releases
+        if: env.ANDROID_RELEASE_SIGNING_READY == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "build-${GITHUB_RUN_NUMBER}" \
+            "android/app/build/outputs/apk/release/app-release.apk" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "JW Organizer feature build ${GITHUB_RUN_NUMBER}" \
+            --notes "ARM64 release build from commit ${GITHUB_SHA:0:7}. Download and install through Settings → App updates." \
+            --prerelease
