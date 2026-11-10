@@ -33,6 +33,7 @@
     },
     "android": {
       "package": "com.charledave.jworganizer",
+      "allowBackup": true,
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "backgroundColor": "#315E4B",
