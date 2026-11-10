@@ -11,12 +11,14 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { createLocalBackup, getAppSetting, restoreLocalBackup, setAppSetting } from '../data/database';
 import { refreshScheduledReminders } from '../data/notifications';
+import { useTracker } from '../state/TrackerContext';
 import { ThemeColors, useAppTheme, spacing } from '../ui/theme';
 
 export default function SettingsScreen() {
   const { colors, mode, setMode } = useAppTheme();
   const styles = createStyles(colors);
   const router = useRouter();
+  const { refreshSessions } = useTracker();
   const [enabled, setEnabled] = useState(true);
   const [permission, setPermission] = useState<Notifications.PermissionResponse | null>(null);
   const [busy, setBusy] = useState(false);
@@ -109,7 +111,7 @@ export default function SettingsScreen() {
       }
       Alert.alert('I-restore ang backup?', 'Papalitan nito ang kasalukuyang local data sa app.', [
         { text: 'Kanselahin', style: 'cancel' },
-        { text: 'I-restore', style: 'destructive', onPress: () => { void (async () => { try { await restoreLocalBackup(parsed); setBackupMessage('Na-restore ang data. Isara at buksan muli ang app para i-refresh ang mga screen.'); } catch (error) { setBackupMessage(error instanceof Error ? error.message : 'Hindi na-restore ang backup.'); } })(); } },
+        { text: 'I-restore', style: 'destructive', onPress: () => { void (async () => { try { await restoreLocalBackup(parsed); await refreshSessions(); const notificationsEnabled = (await getAppSetting('reminder_notifications_enabled', '1')) === '1'; await refreshScheduledReminders(notificationsEnabled); await refresh(); setBackupMessage('Na-restore ang backup at na-refresh ang data at reminders.'); } catch (error) { setBackupMessage(error instanceof Error ? error.message : 'Hindi na-restore ang backup.'); } })(); } },
       ]);
     } catch { setBackupMessage('Hindi mabasa ang backup file. Pumili ng valid na JW Organizer JSON backup.'); }
   };
