@@ -5,13 +5,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { localDateKey, ServiceSession } from '../data/database';
 import { useTracker } from '../state/TrackerContext';
 import { formatDayLabel, formatDuration } from '../ui/format';
-import { colors, spacing } from '../ui/theme';
+import { ThemeColors, useAppTheme, spacing } from '../ui/theme';
 
 const weekdays = ['L', 'M', 'M', 'H', 'B', 'S', 'L'];
 const monthLabel = (date: Date) => date.toLocaleDateString('fil-PH', { month: 'long', year: 'numeric' });
 const dateKey = (year: number, month: number, day: number) => `${year}-${`${month + 1}`.padStart(2, '0')}-${`${day}`.padStart(2, '0')}`;
 
 export default function CalendarScreen() {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const { sessions } = useTracker();
   const [visibleMonth, setVisibleMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [selectedDate, setSelectedDate] = useState(localDateKey());
@@ -61,7 +63,7 @@ export default function CalendarScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.canvas },
   content: { paddingHorizontal: spacing.lg, paddingBottom: 30 },
   header: { height: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

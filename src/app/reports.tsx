@@ -4,13 +4,17 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTracker } from '../state/TrackerContext';
 import { formatDuration } from '../ui/format';
-import { colors, spacing } from '../ui/theme';
+import { ThemeColors, useAppTheme, spacing } from '../ui/theme';
 
 function MetricRow({ icon, label, value, tint }: { icon: keyof typeof Ionicons.glyphMap; label: string; value: string; tint?: string }) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   return <View style={styles.metricRow}><View style={[styles.metricIcon, tint ? { backgroundColor: tint } : null]}><Ionicons name={icon} size={18} color={colors.green} /></View><Text style={styles.metricLabel}>{label}</Text><Text style={styles.metricValue}>{value}</Text></View>;
 }
 
 export default function ReportsScreen() {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const { sessions } = useTracker();
   const [monthOffset, setMonthOffset] = useState(0);
   const selectedMonth = new Date(new Date().getFullYear(), new Date().getMonth() + monthOffset, 1);
@@ -37,7 +41,7 @@ export default function ReportsScreen() {
           <Text style={styles.heroValue}>{formatDuration(totals.seconds)}</Text>
           <Text style={styles.heroCaption}>{monthSessions.length} service session{monthSessions.length === 1 ? '' : 's'} ngayong buwan</Text>
           <View style={styles.heroRule} />
-          <View style={styles.heroFoot}><Ionicons name="lock-closed-outline" size={12} color="#DAE7DE" /><Text style={styles.heroFootText}>Personal report · Naka-save lang sa device</Text></View>
+          <View style={styles.heroFoot}><Ionicons name="lock-closed-outline" size={12} color={colors.surface} /><Text style={styles.heroFootText}>Personal report · Naka-save lang sa device</Text></View>
         </View>
 
         <View style={styles.sectionHeader}><Text style={styles.sectionTitle}>Activity</Text><Text style={styles.privateLabel}>THIS MONTH</Text></View>
@@ -57,7 +61,7 @@ export default function ReportsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.canvas },
   content: { paddingHorizontal: spacing.lg, paddingBottom: 30 },
   header: { height: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
@@ -67,13 +71,13 @@ const styles = StyleSheet.create({
   monthLabel: { color: colors.ink, fontWeight: '600', fontSize: 14, textTransform: 'capitalize', minWidth: 130, textAlign: 'center' },
   heroCard: { backgroundColor: colors.green, borderRadius: 23, padding: 21 },
   heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  heroEyebrow: { fontSize: 10, color: '#D1DED5', letterSpacing: 1.2, fontWeight: '700' },
+  heroEyebrow: { fontSize: 10, color: colors.surface, letterSpacing: 1.2, fontWeight: '700' },
   heroIcon: { width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(255,255,255,0.13)', alignItems: 'center', justifyContent: 'center' },
   heroValue: { fontSize: 34, fontWeight: '700', color: colors.surface, letterSpacing: -0.8, marginTop: 15 },
-  heroCaption: { fontSize: 12, color: '#D1DED5', marginTop: 3 },
+  heroCaption: { fontSize: 12, color: colors.surface, marginTop: 3 },
   heroRule: { height: 1, backgroundColor: 'rgba(255,255,255,0.16)', marginTop: 20, marginBottom: 13 },
   heroFoot: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  heroFootText: { fontSize: 10, color: '#D1DED5' },
+  heroFootText: { fontSize: 10, color: colors.surface },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 27, marginBottom: 11 },
   sectionTitle: { color: colors.ink, fontSize: 16, fontWeight: '700' },
   privateLabel: { color: colors.muted, fontSize: 9, fontWeight: '700', letterSpacing: 1 },

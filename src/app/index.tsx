@@ -1,16 +1,18 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTracker } from '../state/TrackerContext';
 import { formatClock, formatDayLabel, formatDuration } from '../ui/format';
-import { colors, spacing } from '../ui/theme';
-import { localDateKey, ServiceSession } from '../data/database';
+import { ThemeColors, useAppTheme, spacing } from '../ui/theme';
+import { getAppSetting, localDateKey, ServiceSession } from '../data/database';
 
 const zeroCounts = { placements: 0, videos: 0, returnVisits: 0, bibleStudies: 0 };
 
 function CountInput({ label, value, onChange }: { label: string; value: number; onChange: (next: number) => void }) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   return (
     <View style={styles.countInputRow}>
       <Text style={styles.countInputLabel}>{label}</Text>
@@ -24,6 +26,8 @@ function CountInput({ label, value, onChange }: { label: string; value: number; 
 }
 
 function SessionRow({ session }: { session: ServiceSession }) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const count = session.placements + session.videos + session.return_visits + session.bible_studies;
   return (
     <View style={styles.sessionRow}>
@@ -38,9 +42,13 @@ function SessionRow({ session }: { session: ServiceSession }) {
 }
 
 export default function HomeScreen() {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const { sessions, elapsedSeconds, isRunning, ready, start, pause, finish } = useTracker();
   const [logVisible, setLogVisible] = useState(false);
   const [counts, setCounts] = useState(zeroCounts);
+  const [profileName, setProfileName] = useState('');
+  useEffect(() => { getAppSetting('profile_name', '').then(setProfileName); }, []);
   const today = localDateKey();
   const todaySessions = useMemo(() => sessions.filter((session) => session.service_date === today), [sessions, today]);
   const recentSessions = sessions.slice(0, 4);
@@ -64,12 +72,12 @@ export default function HomeScreen() {
         <View style={styles.topBar}>
           <View style={styles.brandMark}><Ionicons name="leaf" size={18} color={colors.surface} /></View>
           <Text style={styles.brandName}>JW Organizer</Text>
-          <View style={styles.avatar} accessibilityLabel="Profile"><Text style={styles.avatarText}>M</Text></View>
+          <View style={styles.avatar} accessibilityLabel="Profile"><Text style={styles.avatarText}>{profileName.trim().charAt(0).toLocaleUpperCase() || 'P'}</Text></View>
         </View>
 
         <View style={styles.greetingBlock}>
           <Text style={styles.eyebrow}>{new Date().toLocaleDateString('fil-PH', { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
-          <Text style={styles.greeting}>Magandang araw</Text>
+          <Text style={styles.greeting}>{profileName.trim() ? `Magandang araw, ${profileName.trim()}` : 'Magandang araw'}</Text>
           <Text style={styles.subtitle}>Narito ang buod ng iyong ministry.</Text>
         </View>
 
@@ -134,14 +142,14 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.canvas },
   content: { paddingHorizontal: spacing.lg, paddingBottom: 30 },
   topBar: { height: 52, flexDirection: 'row', alignItems: 'center', gap: 10 },
   brandMark: { width: 30, height: 30, borderRadius: 10, backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center' },
   brandName: { flex: 1, fontSize: 16, fontWeight: '700', color: colors.ink, letterSpacing: -0.25 },
-  avatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#E5E8E4', alignItems: 'center', justifyContent: 'center' },
-  avatarText: { color: '#414843', fontSize: 13, fontWeight: '700' },
+  avatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.line, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { color: colors.ink, fontSize: 13, fontWeight: '700' },
   greetingBlock: { marginTop: 19, marginBottom: 21 },
   eyebrow: { color: colors.muted, fontSize: 12, fontWeight: '500', textTransform: 'capitalize' },
   greeting: { fontSize: 28, color: colors.ink, fontWeight: '700', letterSpacing: -0.9, marginTop: 3 },
@@ -149,8 +157,8 @@ const styles = StyleSheet.create({
   timerCard: { backgroundColor: colors.surface, borderRadius: 22, padding: 20, borderWidth: 1, borderColor: colors.line },
   timerCardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   timerLabelWrap: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#9DA39E' },
-  liveDotActive: { backgroundColor: '#4B9C69' },
+  liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.muted },
+  liveDotActive: { backgroundColor: colors.green },
   timerLabel: { color: colors.muted, fontSize: 10, letterSpacing: 1.1, fontWeight: '700' },
   timerValue: { fontSize: 42, letterSpacing: -1.3, color: colors.ink, fontWeight: '500', marginTop: 13, fontVariant: ['tabular-nums'] },
   timerHint: { color: colors.muted, fontSize: 13, marginTop: 2 },
@@ -183,7 +191,7 @@ const styles = StyleSheet.create({
   privacyNote: { color: colors.muted, fontSize: 11, alignSelf: 'center', marginTop: 17 },
   modalBackdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(20, 25, 22, 0.32)' },
   modalSheet: { backgroundColor: colors.surface, paddingHorizontal: 22, paddingTop: 10, paddingBottom: 28, borderTopLeftRadius: 27, borderTopRightRadius: 27 },
-  sheetHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: '#D5D9D5', alignSelf: 'center', marginBottom: 18 },
+  sheetHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: colors.line, alignSelf: 'center', marginBottom: 18 },
   modalTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   modalTitle: { color: colors.ink, fontSize: 20, fontWeight: '700', letterSpacing: -0.45 },
   modalSubtitle: { color: colors.muted, fontSize: 12, marginTop: 4, textTransform: 'capitalize' },
