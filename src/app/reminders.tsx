@@ -7,6 +7,7 @@ import { cancelReminderNotification, requestReminderPermission, scheduleReminder
 import { FilterRow, SearchInput } from '../ui/SearchFilters';
 import { DateField, TimeField } from '../ui/DateTimeFields';
 import { ThemeColors, useAppTheme, spacing } from '../ui/theme';
+import { plainText, RichTextEditor, RichTextPreview } from '../ui/RichTextEditor';
 
 type Category = Reminder['category'];
 type Filter = 'all' | 'upcoming' | 'completed' | 'overdue';
@@ -16,7 +17,7 @@ const timeKey = () => `${`${new Date().getHours()}`.padStart(2, '0')}:${`${new D
 const blank = () => ({ title: '', reminder_date: dateKey(), reminder_time: timeKey(), category: 'Ministry' as Category, details: '' });
 const dateTime = (item: Pick<Reminder, 'reminder_date' | 'reminder_time'>) => new Date(`${item.reminder_date}T${item.reminder_time}:00`);
 const isValidDateKey = (value: string) => { if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false; const [y, m, d] = value.split('-').map(Number); const date = new Date(y, m - 1, d); return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d; };
-const dateLabel = (item: Pick<Reminder, 'reminder_date' | 'reminder_time'>) => { const [y, m, d] = item.reminder_date.split('-').map(Number); return `${new Date(y, m - 1, d).toLocaleDateString('fil-PH', { weekday: 'short', month: 'short', day: 'numeric' })} · ${item.reminder_time}`; };
+const dateLabel = (item: Pick<Reminder, 'reminder_date' | 'reminder_time'>) => { const [y, m, d] = item.reminder_date.split('-').map(Number); return `${new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} · ${item.reminder_time}`; };
 
 export default function RemindersScreen() {
   const { colors } = useAppTheme();
@@ -34,7 +35,7 @@ export default function RemindersScreen() {
 
   const filtered = useMemo(() => items.filter((item) => {
     const q = query.trim().toLocaleLowerCase();
-    const matchesQuery = !q || [item.title, item.details, item.category].some((value) => value.toLocaleLowerCase().includes(q));
+    const matchesQuery = !q || [item.title, plainText(item.details), item.category].some((value) => value.toLocaleLowerCase().includes(q));
     const overdue = !item.completed && dateTime(item).getTime() < Date.now();
     const matchesFilter = filter === 'all' || (filter === 'completed' ? Boolean(item.completed) : filter === 'overdue' ? overdue : !item.completed && !overdue);
     return matchesQuery && matchesFilter;
@@ -43,9 +44,9 @@ export default function RemindersScreen() {
   const openNew = () => { setEditing(null); setForm(blank()); setError(''); setVisible(true); };
   const openEdit = (item: Reminder) => { setEditing(item); setForm({ title: item.title, reminder_date: item.reminder_date, reminder_time: item.reminder_time, category: item.category, details: item.details }); setError(''); setVisible(true); };
   const save = async () => {
-    if (!form.title.trim()) { setError('Maglagay ng pamagat ng paalala.'); return; }
-    if (!isValidDateKey(form.reminder_date)) { setError('Pumili ng wastong petsa.'); return; }
-    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(form.reminder_time)) { setError('Ilagay ang oras sa 24-hour format, gaya ng 09:30.'); return; }
+    if (!form.title.trim()) { setError('Enter a reminder title.'); return; }
+    if (!isValidDateKey(form.reminder_date)) { setError('Choose a valid date.'); return; }
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(form.reminder_time)) { setError('Enter the time in 24-hour format, such as 09:30.'); return; }
 
     const previous = editing?.notification_id ?? '';
     if (previous) await cancelReminderNotification(previous);
@@ -57,14 +58,14 @@ export default function RemindersScreen() {
         const permission = await requestReminderPermission();
         if (permission.granted && !saved.completed) {
           const id = await scheduleReminderNotification(saved);
-          setFeedback(id ? 'Paalala at notification na-save.' : 'Na-save ang paalala. Lampas na ang oras kaya hindi na nag-schedule ng notification.');
+          setFeedback(id ? 'Reminder and notification saved.' : 'Reminder saved. Its time has passed, so no notification was scheduled.');
         } else {
           await setReminderNotificationId(saved.id, '');
-          setFeedback('Na-save ang paalala. Payagan ang notifications sa Settings para makatanggap ng alert.');
+          setFeedback('Reminder saved. Allow notifications in Settings to receive alerts.');
         }
       } else {
         await setReminderNotificationId(saved.id, '');
-        setFeedback('Na-save ang paalala. Naka-off ang notifications sa Settings.');
+        setFeedback('Reminder saved. Notifications are off in Settings.');
       }
     }
     setVisible(false); setForm(blank()); setEditing(null); setError(''); await refresh();
@@ -84,29 +85,29 @@ export default function RemindersScreen() {
 
   return <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
     <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-      <View style={styles.header}><View style={{ flex: 1 }}><Text style={styles.heading}>Reminders</Text><Text style={styles.subtitle}>Mga lokal na alert para sa mahalagang gagawin.</Text></View><Pressable accessibilityLabel="Magdagdag ng paalala" onPress={openNew} style={styles.addButton}><Ionicons name="add" size={22} color={colors.surface} /></Pressable></View>
-      <SearchInput value={query} onChangeText={setQuery} placeholder="Maghanap ng paalala" />
-      <FilterRow options={[{ value: 'upcoming', label: 'Paparating' }, { value: 'overdue', label: 'Na-late' }, { value: 'completed', label: 'Tapos na' }, { value: 'all', label: 'Lahat' }]} value={filter} onChange={setFilter} />
+      <View style={styles.header}><View style={{ flex: 1 }}><Text style={styles.heading}>Reminders</Text><Text style={styles.subtitle}>Local alerts for important tasks.</Text></View><Pressable accessibilityLabel="Add reminder" onPress={openNew} style={styles.addButton}><Ionicons name="add" size={22} color={colors.surface} /></Pressable></View>
+      <SearchInput value={query} onChangeText={setQuery} placeholder="Search reminders" />
+      <FilterRow options={[{ value: 'upcoming', label: 'Upcoming' }, { value: 'overdue', label: 'Overdue' }, { value: 'completed', label: 'Completed' }, { value: 'all', label: 'All' }]} value={filter} onChange={setFilter} />
       {feedback ? <Pressable onPress={() => setFeedback('')} style={styles.notice}><Ionicons name="checkmark-circle-outline" size={17} color={colors.green} /><Text style={styles.noticeText}>{feedback}</Text><Ionicons name="close" size={16} color={colors.muted} /></Pressable> : null}
-      <View style={styles.summary}><View style={styles.summaryIcon}><Ionicons name="notifications-outline" size={20} color={colors.green} /></View><View><Text style={styles.summaryNumber}>{items.filter((item) => !item.completed && dateTime(item).getTime() >= Date.now()).length}</Text><Text style={styles.meta}>aktibong paalala</Text></View></View>
-      <Text style={styles.section}>{filter === 'upcoming' ? 'Mga paparating' : filter === 'overdue' ? 'Mga na-late' : filter === 'completed' ? 'Natapos' : 'Lahat ng paalala'}</Text>
+      <View style={styles.summary}><View style={styles.summaryIcon}><Ionicons name="notifications-outline" size={20} color={colors.green} /></View><View><Text style={styles.summaryNumber}>{items.filter((item) => !item.completed && dateTime(item).getTime() >= Date.now()).length}</Text><Text style={styles.meta}>active reminders</Text></View></View>
+      <Text style={styles.section}>{filter === 'upcoming' ? 'Upcoming reminders' : filter === 'overdue' ? 'Overdue reminders' : filter === 'completed' ? 'Completed' : 'All reminders'}</Text>
       {filtered.length ? filtered.map((item) => {
         const overdue = !item.completed && dateTime(item).getTime() < Date.now();
         return <View key={item.id} style={styles.card}>
-          <Pressable accessibilityLabel={item.completed ? 'Ibalik sa paparating' : 'Markahang tapos na'} onPress={() => toggleCompleted(item)} style={[styles.check, Boolean(item.completed) && styles.checked]}><Ionicons name={item.completed ? 'checkmark' : 'ellipse-outline'} size={19} color={item.completed ? colors.surface : colors.green} /></Pressable>
-          <Pressable onPress={() => openEdit(item)} style={styles.cardBody}><Text style={[styles.cardTitle, item.completed ? styles.strike : null]}>{item.title}</Text><Text style={[styles.date, overdue && styles.overdue]}>{dateLabel(item)}</Text><Text style={styles.meta}>{item.category}{item.notification_id ? ' · Alert naka-set' : ' · Walang alert'}</Text>{item.details ? <Text style={styles.details} numberOfLines={2}>{item.details}</Text> : null}</Pressable>
-          <View style={styles.actions}><Pressable accessibilityLabel="I-edit ang paalala" onPress={() => openEdit(item)} style={styles.iconButton}><Ionicons name="create-outline" size={18} color={colors.muted} /></Pressable><Pressable accessibilityLabel="Burahin ang paalala" onPress={() => remove(item)} style={styles.iconButton}><Ionicons name="trash-outline" size={17} color={colors.muted} /></Pressable></View>
+          <Pressable accessibilityLabel={item.completed ? 'Mark as upcoming' : 'Mark as completed'} onPress={() => toggleCompleted(item)} style={[styles.check, Boolean(item.completed) && styles.checked]}><Ionicons name={item.completed ? 'checkmark' : 'ellipse-outline'} size={19} color={item.completed ? colors.surface : colors.green} /></Pressable>
+          <Pressable onPress={() => openEdit(item)} style={styles.cardBody}><Text style={[styles.cardTitle, item.completed ? styles.strike : null]}>{item.title}</Text><Text style={[styles.date, overdue && styles.overdue]}>{dateLabel(item)}</Text><Text style={styles.meta}>{item.category}{item.notification_id ? ' · Alert scheduled' : ' · No alert'}</Text>{item.details ? <RichTextPreview value={item.details} style={styles.details} numberOfLines={2}/> : null}</Pressable>
+          <View style={styles.actions}><Pressable accessibilityLabel="Edit reminder" onPress={() => openEdit(item)} style={styles.iconButton}><Ionicons name="create-outline" size={18} color={colors.muted} /></Pressable><Pressable accessibilityLabel="Delete reminder" onPress={() => remove(item)} style={styles.iconButton}><Ionicons name="trash-outline" size={17} color={colors.muted} /></Pressable></View>
         </View>;
-      }) : <View style={styles.empty}><View style={styles.emptyIcon}><Ionicons name="notifications-outline" size={23} color={colors.green} /></View><Text style={styles.emptyTitle}>{query ? 'Walang tugma' : 'Wala pang paalala'}</Text><Text style={styles.meta}>{query ? 'Subukan ang ibang salita o filter.' : 'I-tap ang + para magtakda ng unang paalala.'}</Text></View>}
-      <Text style={styles.privacy}><Ionicons name="lock-closed-outline" size={12} color={colors.muted} />  Naka-save lang sa device mo</Text>
+      }) : <View style={styles.empty}><View style={styles.emptyIcon}><Ionicons name="notifications-outline" size={23} color={colors.green} /></View><Text style={styles.emptyTitle}>{query ? 'No matches' : 'No reminders yet'}</Text><Text style={styles.meta}>{query ? 'Try another search or filter.' : 'Tap + to create your first reminder.'}</Text></View>}
+      <Text style={styles.privacy}><Ionicons name="lock-closed-outline" size={12} color={colors.muted} />  Saved only on your device</Text>
     </ScrollView>
 
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={() => setVisible(false)}><KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}><View style={styles.backdrop}><View style={styles.sheet}><View style={styles.handle} /><View style={styles.sheetHeader}><View><Text style={styles.sheetTitle}>{editing ? 'I-edit ang paalala' : 'Bagong paalala'}</Text><Text style={styles.sheetSubtitle}>Magse-save ito sa app kahit offline.</Text></View><Pressable onPress={() => setVisible(false)}><Ionicons name="close" size={23} color={colors.ink} /></Pressable></View><ScrollView keyboardShouldPersistTaps="handled">
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={() => setVisible(false)}><KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}><View style={styles.backdrop}><View style={styles.sheet}><View style={styles.handle} /><View style={styles.sheetHeader}><View><Text style={styles.sheetTitle}>{editing ? 'Edit reminder' : 'New reminder'}</Text><Text style={styles.sheetSubtitle}>This will be saved in the app and available offline.</Text></View><Pressable onPress={() => setVisible(false)}><Ionicons name="close" size={23} color={colors.ink} /></Pressable></View><ScrollView keyboardShouldPersistTaps="handled">
       <Text style={styles.label}>Uri</Text><View style={styles.pills}>{categories.map((category) => <Pressable key={category} onPress={() => setForm({ ...form, category })} style={[styles.pill, form.category === category && styles.pillActive]}><Text style={[styles.pillText, form.category === category && styles.pillTextActive]}>{category}</Text></Pressable>)}</View>
-      <Text style={styles.label}>Pamagat</Text><TextInput placeholder="Hal. Balikan si Maria" placeholderTextColor={colors.muted} value={form.title} onChangeText={(title) => setForm({ ...form, title })} style={styles.input} />
-      <View style={styles.split}><DateField label="Petsa" value={form.reminder_date} onChange={(reminder_date) => setForm({ ...form, reminder_date })} /><TimeField label="Oras" value={form.reminder_time} onChange={(reminder_time) => setForm({ ...form, reminder_time })} /></View>
-      <Text style={styles.label}>Detalye (opsyonal)</Text><TextInput placeholder="Lugar, paksa, o dagdag na paalala" placeholderTextColor={colors.muted} value={form.details} onChangeText={(details) => setForm({ ...form, details })} style={[styles.input, styles.multiline]} multiline />
-      {error ? <Text style={styles.error}>{error}</Text> : null}<Pressable onPress={save} style={styles.save}><Text style={styles.saveText}>I-save ang paalala</Text></Pressable>
+      <Text style={styles.label}>Title</Text><TextInput placeholder="Hal. Balikan si Maria" placeholderTextColor={colors.muted} value={form.title} onChangeText={(title) => setForm({ ...form, title })} style={styles.input} />
+      <View style={styles.split}><DateField label="Date" value={form.reminder_date} onChange={(reminder_date) => setForm({ ...form, reminder_date })} /><TimeField label="Time" value={form.reminder_time} onChange={(reminder_time) => setForm({ ...form, reminder_time })} /></View>
+      <RichTextEditor value={form.details} onChange={(details) => setForm({ ...form, details })} placeholder="Place, topic, or additional details" minHeight={100}/>
+      {error ? <Text style={styles.error}>{error}</Text> : null}<Pressable onPress={save} style={styles.save}><Text style={styles.saveText}>Save reminder</Text></Pressable>
     </ScrollView></View></View></KeyboardAvoidingView></Modal>
   </SafeAreaView>;
 }

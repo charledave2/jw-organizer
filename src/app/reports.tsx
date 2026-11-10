@@ -18,7 +18,7 @@ export default function ReportsScreen() {
   const { sessions } = useTracker();
   const [monthOffset, setMonthOffset] = useState(0);
   const selectedMonth = new Date(new Date().getFullYear(), new Date().getMonth() + monthOffset, 1);
-  const monthName = selectedMonth.toLocaleDateString('fil-PH', { month: 'long', year: 'numeric' });
+  const monthName = selectedMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   const monthSessions = useMemo(() => sessions.filter((session) => {
     const day = new Date(`${session.service_date}T12:00:00`);
     return day.getFullYear() === selectedMonth.getFullYear() && day.getMonth() === selectedMonth.getMonth();
@@ -41,7 +41,7 @@ export default function ReportsScreen() {
           <Text style={styles.heroValue}>{formatDuration(totals.seconds)}</Text>
           <Text style={styles.heroCaption}>{monthSessions.length} service session{monthSessions.length === 1 ? '' : 's'} ngayong buwan</Text>
           <View style={styles.heroRule} />
-          <View style={styles.heroFoot}><Ionicons name="lock-closed-outline" size={12} color={colors.surface} /><Text style={styles.heroFootText}>Personal report · Naka-save lang sa device</Text></View>
+          <View style={styles.heroFoot}><Ionicons name="lock-closed-outline" size={12} color={colors.surface} /><Text style={styles.heroFootText}>Personal report · Saved only on this device</Text></View>
         </View>
 
         <View style={styles.sectionHeader}><Text style={styles.sectionTitle}>Activity</Text><Text style={styles.privateLabel}>THIS MONTH</Text></View>
@@ -55,7 +55,7 @@ export default function ReportsScreen() {
           <MetricRow icon="people-outline" label="Bible studies" value={`${totals.bibleStudies}`} />
         </View>
 
-        <View style={styles.noteRow}><Ionicons name="information-circle-outline" size={18} color={colors.muted} /><Text style={styles.noteText}>Ang report ay mula sa mga session na ikaw mismo ang nag-log.</Text></View>
+        <View style={styles.noteRow}><Ionicons name="information-circle-outline" size={18} color={colors.muted} /><Text style={styles.noteText}>This report is based on the sessions you logged.</Text></View>
       </ScrollView>
     </SafeAreaView>
   );

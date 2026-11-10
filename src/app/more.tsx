@@ -5,10 +5,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemeColors, useAppTheme, spacing } from '../ui/theme';
 
 const tools: { title: string; subtitle: string; route: '/reminders' | '/calendar' | '/reports' | '/settings'; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { title: 'Reminders', subtitle: 'Mga alert para sa schedule at follow-up', route: '/reminders', icon: 'notifications-outline' },
-  { title: 'Calendar', subtitle: 'Tingnan ang buwan at mga araw ng pulong', route: '/calendar', icon: 'calendar-outline' },
-  { title: 'Reports', subtitle: 'Buod ng oras at mga nagawa sa ministeryo', route: '/reports', icon: 'bar-chart-outline' },
-  { title: 'Settings', subtitle: 'Notifications, privacy, at app info', route: '/settings', icon: 'settings-outline' },
+  { title: 'Reminders', subtitle: 'Alerts for your schedule and follow-ups', route: '/reminders', icon: 'notifications-outline' },
+  { title: 'Calendar', subtitle: 'View the month and meeting days', route: '/calendar', icon: 'calendar-outline' },
+  { title: 'Reports', subtitle: 'Summary of ministry time and activity', route: '/reports', icon: 'bar-chart-outline' },
+  { title: 'Settings', subtitle: 'Notifications, privacy, and app info', route: '/settings', icon: 'settings-outline' },
 ];
 
 export default function MoreScreen() {
@@ -16,11 +16,11 @@ export default function MoreScreen() {
   const styles = createStyles(colors);
   const router = useRouter();
   return <SafeAreaView style={styles.safe} edges={['top', 'bottom']}><ScrollView contentContainerStyle={styles.content}>
-    <View style={styles.header}><Text style={styles.heading}>More</Text><Text style={styles.subtitle}>Iba pang tool para sa organizer mo.</Text></View>
+    <View style={styles.header}><Text style={styles.heading}>More</Text><Text style={styles.subtitle}>More tools for your organizer.</Text></View>
     <View style={styles.grid}>{tools.map((tool) => <Pressable key={tool.route} onPress={() => router.push(tool.route)} style={styles.card}>
       <View style={styles.iconBox}><Ionicons name={tool.icon} size={20} color={colors.green} /></View><View style={styles.cardBody}><Text style={styles.title}>{tool.title}</Text><Text style={styles.description}>{tool.subtitle}</Text></View><Ionicons name="chevron-forward" size={17} color={colors.muted} />
     </Pressable>)}</View>
-    <View style={styles.footer}><Ionicons name="leaf-outline" size={15} color={colors.green} /><Text style={styles.footerText}>JW Organizer · Naka-save sa device mo</Text></View>
+    <View style={styles.footer}><Ionicons name="leaf-outline" size={15} color={colors.green} /><Text style={styles.footerText}>JW Organizer · Saved on your device</Text></View>
   </ScrollView></SafeAreaView>;
 }
 

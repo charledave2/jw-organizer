@@ -7,8 +7,8 @@ import { useTracker } from '../state/TrackerContext';
 import { formatDayLabel, formatDuration } from '../ui/format';
 import { ThemeColors, useAppTheme, spacing } from '../ui/theme';
 
-const weekdays = ['L', 'M', 'M', 'H', 'B', 'S', 'L'];
-const monthLabel = (date: Date) => date.toLocaleDateString('fil-PH', { month: 'long', year: 'numeric' });
+const weekdays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+const monthLabel = (date: Date) => date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 const dateKey = (year: number, month: number, day: number) => `${year}-${`${month + 1}`.padStart(2, '0')}-${`${day}`.padStart(2, '0')}`;
 
 export default function CalendarScreen() {
@@ -56,8 +56,8 @@ export default function CalendarScreen() {
           <View style={styles.legend}><View style={styles.legendDot} /><Text style={styles.legendText}>May activity</Text></View>
         </View>
 
-        <View style={styles.daySummaryHeader}><View><Text style={styles.daySummaryTitle}>{formatDayLabel(selectedDate)}</Text><Text style={styles.daySummaryCaption}>{selectedSessions.length ? `${selectedSessions.length} session${selectedSessions.length === 1 ? '' : 's'} · ${formatDuration(selectedTotal)}` : 'Walang activity na naitala'}</Text></View><View style={styles.dayBadge}><Ionicons name="sunny-outline" size={17} color={colors.green} /></View></View>
-        {selectedSessions.length ? selectedSessions.map((item) => <View key={item.id} style={styles.sessionCard}><View style={styles.sessionIcon}><Ionicons name="leaf-outline" size={18} color={colors.green} /></View><View style={{ flex: 1 }}><Text style={styles.sessionTitle}>Field service</Text><Text style={styles.sessionMeta}>{item.placements} placements · {item.return_visits} return visits</Text></View><Text style={styles.sessionDuration}>{formatDuration(item.duration_seconds)}</Text></View>) : <View style={styles.emptyCard}><Ionicons name="calendar-clear-outline" size={22} color={colors.muted} /><Text style={styles.emptyText}>Wala pang naka-log sa araw na ito.</Text></View>}
+        <View style={styles.daySummaryHeader}><View><Text style={styles.daySummaryTitle}>{formatDayLabel(selectedDate)}</Text><Text style={styles.daySummaryCaption}>{selectedSessions.length ? `${selectedSessions.length} session${selectedSessions.length === 1 ? '' : 's'} · ${formatDuration(selectedTotal)}` : 'No activity recorded'}</Text></View><View style={styles.dayBadge}><Ionicons name="sunny-outline" size={17} color={colors.green} /></View></View>
+        {selectedSessions.length ? selectedSessions.map((item) => <View key={item.id} style={styles.sessionCard}><View style={styles.sessionIcon}><Ionicons name="leaf-outline" size={18} color={colors.green} /></View><View style={{ flex: 1 }}><Text style={styles.sessionTitle}>Field service</Text><Text style={styles.sessionMeta}>{item.placements} placements · {item.return_visits} return visits</Text></View><Text style={styles.sessionDuration}>{formatDuration(item.duration_seconds)}</Text></View>) : <View style={styles.emptyCard}><Ionicons name="calendar-clear-outline" size={22} color={colors.muted} /><Text style={styles.emptyText}>Nothing has been logged for this day yet.</Text></View>}
       </ScrollView>
     </SafeAreaView>
   );

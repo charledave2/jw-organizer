@@ -17,9 +17,9 @@ function CountInput({ label, value, onChange }: { label: string; value: number; 
     <View style={styles.countInputRow}>
       <Text style={styles.countInputLabel}>{label}</Text>
       <View style={styles.stepper}>
-        <Pressable accessibilityLabel={`Bawasan ang ${label}`} onPress={() => onChange(Math.max(0, value - 1))} style={styles.stepperButton}><Ionicons name="remove" size={18} color={colors.ink} /></Pressable>
+        <Pressable accessibilityLabel={`Decrease ${label}`} onPress={() => onChange(Math.max(0, value - 1))} style={styles.stepperButton}><Ionicons name="remove" size={18} color={colors.ink} /></Pressable>
         <Text style={styles.stepperValue}>{value}</Text>
-        <Pressable accessibilityLabel={`Dagdagan ang ${label}`} onPress={() => onChange(value + 1)} style={styles.stepperButton}><Ionicons name="add" size={18} color={colors.ink} /></Pressable>
+        <Pressable accessibilityLabel={`Increase ${label}`} onPress={() => onChange(value + 1)} style={styles.stepperButton}><Ionicons name="add" size={18} color={colors.ink} /></Pressable>
       </View>
     </View>
   );
@@ -76,9 +76,9 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.greetingBlock}>
-          <Text style={styles.eyebrow}>{new Date().toLocaleDateString('fil-PH', { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
-          <Text style={styles.greeting}>{profileName.trim() ? `Magandang araw, ${profileName.trim()}` : 'Magandang araw'}</Text>
-          <Text style={styles.subtitle}>Narito ang buod ng iyong ministry.</Text>
+          <Text style={styles.eyebrow}>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
+          <Text style={styles.greeting}>{profileName.trim() ? `Good day, ${profileName.trim()}` : 'Good day'}</Text>
+          <Text style={styles.subtitle}>Here is your ministry summary.</Text>
         </View>
 
         <View style={styles.timerCard}>
@@ -87,11 +87,11 @@ export default function HomeScreen() {
             <Ionicons name="time-outline" size={18} color={colors.muted} />
           </View>
           <Text style={styles.timerValue}>{formatClock(elapsedSeconds)}</Text>
-          <Text style={styles.timerHint}>{isRunning ? 'Nagsusukat ng oras ng paglilingkod' : elapsedSeconds ? 'Ipagpatuloy kapag handa ka na' : 'Handa ka na bang magsimula?'}</Text>
+          <Text style={styles.timerHint}>{isRunning ? 'Field service timer is running' : elapsedSeconds ? 'Resume when you are ready' : 'Handa ka na bang magsimula?'}</Text>
           <View style={styles.timerActions}>
             <Pressable onPress={timerAction} style={[styles.primaryButton, isRunning && styles.secondaryButton]}>
               <Ionicons name={isRunning ? 'pause' : 'play'} size={17} color={isRunning ? colors.green : colors.surface} />
-              <Text style={[styles.primaryButtonText, isRunning && styles.secondaryButtonText]}>{isRunning ? 'I-pause' : elapsedSeconds ? 'Ipagpatuloy' : 'Simulan ang timer'}</Text>
+              <Text style={[styles.primaryButtonText, isRunning && styles.secondaryButtonText]}>{isRunning ? 'Pause' : elapsedSeconds ? 'Resume' : 'Start timer'}</Text>
             </Pressable>
             {(isRunning || elapsedSeconds > 0) && <Pressable onPress={() => { if (isRunning) pause(); setCounts(zeroCounts); setLogVisible(true); }} style={styles.finishButton}><Text style={styles.finishButtonText}>Tapusin</Text></Pressable>}
           </View>
@@ -102,7 +102,7 @@ export default function HomeScreen() {
           <Text style={styles.sectionLink}>Buod</Text>
         </View>
         <View style={styles.statsStrip}>
-          <View style={styles.statItem}><Text style={styles.statValue}>{formatDuration(todaySeconds)}</Text><Text style={styles.statLabel}>Oras</Text></View>
+          <View style={styles.statItem}><Text style={styles.statValue}>{formatDuration(todaySeconds)}</Text><Text style={styles.statLabel}>Time</Text></View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}><Text style={styles.statValue}>{todaySessions.length}</Text><Text style={styles.statLabel}>Session</Text></View>
           <View style={styles.statDivider} />
@@ -111,30 +111,30 @@ export default function HomeScreen() {
 
         <View style={[styles.sectionHeader, { marginTop: spacing.xl }]}>
           <Text style={styles.sectionTitle}>Kamakailang activity</Text>
-          <Pressable onPress={() => router.push('/calendar')}><Text style={styles.sectionLink}>Tingnan lahat</Text></Pressable>
+          <Pressable onPress={() => router.push('/calendar')}><Text style={styles.sectionLink}>View all</Text></Pressable>
         </View>
         {recentSessions.length ? (
           <View style={styles.sessionList}>{recentSessions.map((session) => <SessionRow key={session.id} session={session} />)}</View>
         ) : (
           <View style={styles.emptyActivity}>
             <View style={styles.emptyIcon}><Ionicons name="time-outline" size={22} color={colors.green} /></View>
-            <View style={{ flex: 1 }}><Text style={styles.emptyTitle}>{ready ? 'Wala pang naitatala' : 'Inihahanda ang iyong data…'}</Text><Text style={styles.emptyText}>Lalabas dito ang iyong mga session pagkatapos mong mag-log.</Text></View>
+            <View style={{ flex: 1 }}><Text style={styles.emptyTitle}>{ready ? 'Nothing recorded yet' : 'Loading your data…'}</Text><Text style={styles.emptyText}>Your sessions will appear here after you log them.</Text></View>
           </View>
         )}
-        <Text style={styles.privacyNote}><Ionicons name="lock-closed-outline" size={12} color={colors.muted} />  Naka-save sa device mo</Text>
+        <Text style={styles.privacyNote}><Ionicons name="lock-closed-outline" size={12} color={colors.muted} />  Saved on your device</Text>
       </ScrollView>
 
       <Modal visible={logVisible} animationType="slide" transparent onRequestClose={() => setLogVisible(false)}>
         <View style={styles.modalBackdrop}>
           <View style={styles.modalSheet}>
             <View style={styles.sheetHandle} />
-            <View style={styles.modalTitleRow}><View><Text style={styles.modalTitle}>I-log ang session</Text><Text style={styles.modalSubtitle}>{formatClock(elapsedSeconds)} · {new Date().toLocaleDateString('fil-PH', { month: 'long', day: 'numeric' })}</Text></View><Pressable onPress={() => setLogVisible(false)} style={styles.closeButton}><Ionicons name="close" size={20} color={colors.ink} /></Pressable></View>
-            <Text style={styles.formIntro}>Ilagay ang bilang ng mga nagawa ngayong session.</Text>
+            <View style={styles.modalTitleRow}><View><Text style={styles.modalTitle}>Log session</Text><Text style={styles.modalSubtitle}>{formatClock(elapsedSeconds)} · {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}</Text></View><Pressable onPress={() => setLogVisible(false)} style={styles.closeButton}><Ionicons name="close" size={20} color={colors.ink} /></Pressable></View>
+            <Text style={styles.formIntro}>Enter the totals for this session.</Text>
             <CountInput label="Placements" value={counts.placements} onChange={(placements) => setCounts({ ...counts, placements })} />
             <CountInput label="Video showings" value={counts.videos} onChange={(videos) => setCounts({ ...counts, videos })} />
             <CountInput label="Return visits" value={counts.returnVisits} onChange={(returnVisits) => setCounts({ ...counts, returnVisits })} />
             <CountInput label="Bible studies" value={counts.bibleStudies} onChange={(bibleStudies) => setCounts({ ...counts, bibleStudies })} />
-            <Pressable onPress={saveLog} style={styles.saveButton}><Text style={styles.saveButtonText}>I-save ang session</Text></Pressable>
+            <Pressable onPress={saveLog} style={styles.saveButton}><Text style={styles.saveButtonText}>Save session</Text></Pressable>
           </View>
         </View>
       </Modal>

@@ -54,35 +54,35 @@ export default function SettingsScreen() {
         if (!response.granted) {
           setEnabled(false);
           await setAppSetting('reminder_notifications_enabled', '0');
-          setMessage(response.canAskAgain ? 'Hindi pa na-enable ang notification permission. Maaari mo itong subukan ulit.' : 'Naka-block ang permission. Buksan ang system settings para payagan ang notifications.');
+          setMessage(response.canAskAgain ? 'Notification permission is not enabled yet. You can try again.' : 'Permission is blocked. Open system settings to allow notifications.');
         } else {
           setEnabled(true);
           await setAppSetting('reminder_notifications_enabled', '1');
-          setMessage('Naka-enable ang notifications at naibalik ang mga naka-schedule na alert.');
+          setMessage('Notifications are enabled and scheduled alerts have been restored.');
         }
       } else {
         await setAppSetting('reminder_notifications_enabled', '0');
         await refreshScheduledReminders(false);
         setEnabled(false);
         setPermission(await Notifications.getPermissionsAsync());
-        setMessage('Naka-off ang lahat ng naka-schedule na alert. Nananatili ang mga paalala sa device.');
+        setMessage('All scheduled alerts are off. Reminders remain saved on this device.');
       }
     } catch {
-      setMessage('Hindi nabago ang notification setting. Subukan ulit.');
+      setMessage('The notification setting could not be changed. Try again.');
       await refresh();
     } finally { setBusy(false); }
   };
-  const openSystemSettings = async () => { try { await Linking.openSettings(); } catch { setMessage('Hindi mabuksan ang system settings sa device na ito.'); } };
-  const saveProfile = async () => { await setAppSetting('profile_name', name.trim()); await setAppSetting('profile_role', role.trim() || 'Publisher'); await setAppSetting('profile_photo', photo); setProfileMessage('Na-save ang profile sa device.'); setProfileEditorOpen(false); };
+  const openSystemSettings = async () => { try { await Linking.openSettings(); } catch { setMessage('System settings could not be opened on this device.'); } };
+  const saveProfile = async () => { await setAppSetting('profile_name', name.trim()); await setAppSetting('profile_role', role.trim() || 'Publisher'); await setAppSetting('profile_photo', photo); setProfileMessage('Profile saved on this device.'); setProfileEditorOpen(false); };
   const choosePhoto = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permissionResult.granted) { setProfileMessage('Payagan muna ang photo access para makapili ng larawan.'); return; }
+    if (!permissionResult.granted) { setProfileMessage('Allow photo access to choose an image.'); return; }
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.8 });
     if (result.canceled || !result.assets[0]) return;
     const destination = `${FileSystem.documentDirectory}profile-${Date.now()}.jpg`;
     await FileSystem.copyAsync({ from: result.assets[0].uri, to: destination });
     setPhoto(destination);
-    setProfileMessage('Na-update ang profile photo. I-save ang profile para kumpirmahin.');
+    setProfileMessage('Profile photo updated. Save the profile to confirm.');
   };
   const exportBackup = async () => {
     try {
@@ -93,9 +93,9 @@ export default function SettingsScreen() {
       }
       const uri = `${FileSystem.cacheDirectory}jw-organizer-backup-${new Date().toISOString().slice(0, 10)}.json`;
       await FileSystem.writeAsStringAsync(uri, JSON.stringify(backup), { encoding: FileSystem.EncodingType.UTF8 });
-      if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: 'application/json', dialogTitle: 'I-save ang JW Organizer backup' });
-      setBackupMessage('Na-export ang backup file. Piliin ang Drive o local storage sa share options.');
-    } catch { setBackupMessage('Hindi na-export ang backup. Subukan ulit.'); }
+      if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: 'application/json', dialogTitle: 'Save JW Organizer backup' });
+      setBackupMessage('Backup exported. Choose Drive or local storage in the share options.');
+    } catch { setBackupMessage('Backup could not be exported. Try again.'); }
   };
   const importBackup = async () => {
     try {
@@ -110,86 +110,86 @@ export default function SettingsScreen() {
         const photoSetting = settings.find((item) => item.setting_key === 'profile_photo');
         if (photoSetting) photoSetting.setting_value = photoUri;
       }
-      Alert.alert('I-restore ang backup?', 'Papalitan nito ang kasalukuyang local data sa app.', [
+      Alert.alert('Restore backup?', 'This will replace the current local app data.', [
         { text: 'Kanselahin', style: 'cancel' },
-        { text: 'I-restore', style: 'destructive', onPress: () => { void (async () => { try { await restoreLocalBackup(parsed); await refreshSessions(); const notificationsEnabled = (await getAppSetting('reminder_notifications_enabled', '1')) === '1'; await refreshScheduledReminders(notificationsEnabled); await refresh(); setBackupMessage('Na-restore ang backup at na-refresh ang data at reminders.'); } catch (error) { setBackupMessage(error instanceof Error ? error.message : 'Hindi na-restore ang backup.'); } })(); } },
+        { text: 'Restore', style: 'destructive', onPress: () => { void (async () => { try { await restoreLocalBackup(parsed); await refreshSessions(); const notificationsEnabled = (await getAppSetting('reminder_notifications_enabled', '1')) === '1'; await refreshScheduledReminders(notificationsEnabled); await refresh(); setBackupMessage('Backup restored. Data and reminders have been refreshed.'); } catch (error) { setBackupMessage(error instanceof Error ? error.message : 'Backup could not be restored.'); } })(); } },
       ]);
-    } catch { setBackupMessage('Hindi mabasa ang backup file. Pumili ng valid na JW Organizer JSON backup.'); }
+    } catch { setBackupMessage('Backup could not be read. Choose a valid JW Organizer JSON backup.'); }
   };
   const changeBiometric = async (next: boolean) => {
     setMessage('');
-    if (!next) { await setAppSetting('biometric_enabled', '0'); setBiometricEnabled(false); setMessage('Naka-off ang app lock.'); return; }
+    if (!next) { await setAppSetting('biometric_enabled', '0'); setBiometricEnabled(false); setMessage('App lock is off.'); return; }
     const supported = await LocalAuthentication.hasHardwareAsync();
     const enrolled = await LocalAuthentication.isEnrolledAsync();
     setBiometricAvailable(supported && enrolled);
-    if (!supported || !enrolled) { setMessage('Mag-set up muna ng fingerprint o face unlock sa Android Settings.'); return; }
-    const result = await LocalAuthentication.authenticateAsync({ promptMessage: 'I-enable ang biometric lock', promptDescription: 'Kumpirmahin ang fingerprint o face unlock mo.', cancelLabel: 'Kanselahin', biometricsSecurityLevel: 'weak' });
-    if (!result.success) { setMessage('Hindi na-enable ang biometric lock.'); return; }
-    await setAppSetting('biometric_enabled', '1'); setBiometricEnabled(true); setMessage('Naka-enable ang biometric lock. Hihingi ito ng authentication sa susunod na pagbukas ng app.');
+    if (!supported || !enrolled) { setMessage('Set up fingerprint or face unlock in Android Settings first.'); return; }
+    const result = await LocalAuthentication.authenticateAsync({ promptMessage: 'Enable biometric lock', promptDescription: 'Confirm your fingerprint or face unlock.', cancelLabel: 'Kanselahin', biometricsSecurityLevel: 'weak' });
+    if (!result.success) { setMessage('Biometric lock could not be enabled.'); return; }
+    await setAppSetting('biometric_enabled', '1'); setBiometricEnabled(true); setMessage('Biometric lock is enabled. Authentication will be required the next time you open the app.');
   };
 
   return <SafeAreaView style={styles.safe} edges={['top', 'bottom']}><ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-    <View style={styles.header}><View><Text style={styles.heading}>Settings</Text><Text style={styles.subtitle}>Ayusin ang app sa gusto mong paraan.</Text></View></View>
+    <View style={styles.header}><View><Text style={styles.heading}>Settings</Text><Text style={styles.subtitle}>Customize the app to your preferences.</Text></View></View>
     <Text style={styles.section}>Profile</Text>
     <View style={styles.card}>
       <View style={styles.profileRow}>
         <View style={styles.profilePhoto}>{photo ? <Image source={{ uri: photo }} style={styles.profileImage} /> : <Ionicons name="person" size={25} color={colors.green} />}</View>
-        <View style={styles.rowBody}><Text style={styles.title}>{name.trim() || 'Pangalan ng user'}</Text><Text style={styles.meta}>{role.trim() || 'Role'}</Text></View>
-        <Pressable accessibilityRole="button" accessibilityLabel="I-edit ang profile" onPress={() => setProfileEditorOpen(true)} style={styles.iconAction}><Ionicons name="create-outline" size={19} color={colors.green} /></Pressable>
+        <View style={styles.rowBody}><Text style={styles.title}>{name.trim() || 'User name'}</Text><Text style={styles.meta}>{role.trim() || 'Role'}</Text></View>
+        <Pressable accessibilityRole="button" accessibilityLabel="Edit profile" onPress={() => setProfileEditorOpen(true)} style={styles.iconAction}><Ionicons name="create-outline" size={19} color={colors.green} /></Pressable>
       </View>
       {profileMessage ? <Text style={styles.profileMessage}>{profileMessage}</Text> : null}
     </View>
 
     <Text style={styles.section}>Appearance</Text>
-    <View style={styles.card}><View style={styles.row}><View style={styles.iconBox}><Ionicons name={mode === 'dark' ? 'moon-outline' : 'sunny-outline'} size={19} color={colors.green} /></View><View style={styles.rowBody}><Text style={styles.title}>Theme</Text><Text style={styles.meta}>Pumili ng tema ng buong app.</Text></View></View><View style={styles.themePicker}><Pressable onPress={() => setMode('light')} style={[styles.themeOption, mode === 'light' && styles.themeOptionActive]}><Ionicons name="sunny-outline" size={15} color={mode === 'light' ? colors.greenDark : colors.muted}/><Text style={[styles.themeText, mode === 'light' && styles.themeTextActive]}>Light</Text></Pressable><Pressable onPress={() => setMode('dark')} style={[styles.themeOption, mode === 'dark' && styles.themeOptionActive]}><Ionicons name="moon-outline" size={15} color={mode === 'dark' ? colors.greenDark : colors.muted}/><Text style={[styles.themeText, mode === 'dark' && styles.themeTextActive]}>Dark</Text></Pressable></View></View>
+    <View style={styles.card}><View style={styles.row}><View style={styles.iconBox}><Ionicons name={mode === 'dark' ? 'moon-outline' : 'sunny-outline'} size={19} color={colors.green} /></View><View style={styles.rowBody}><Text style={styles.title}>Theme</Text><Text style={styles.meta}>Choose the app-wide theme.</Text></View></View><View style={styles.themePicker}><Pressable onPress={() => setMode('light')} style={[styles.themeOption, mode === 'light' && styles.themeOptionActive]}><Ionicons name="sunny-outline" size={15} color={mode === 'light' ? colors.greenDark : colors.muted}/><Text style={[styles.themeText, mode === 'light' && styles.themeTextActive]}>Light</Text></Pressable><Pressable onPress={() => setMode('dark')} style={[styles.themeOption, mode === 'dark' && styles.themeOptionActive]}><Ionicons name="moon-outline" size={15} color={mode === 'dark' ? colors.greenDark : colors.muted}/><Text style={[styles.themeText, mode === 'dark' && styles.themeTextActive]}>Dark</Text></Pressable></View></View>
 
     <Text style={styles.section}>Security</Text>
-    <View style={styles.card}><View style={styles.row}><View style={styles.iconBox}><Ionicons name="finger-print-outline" size={19} color={colors.green} /></View><View style={styles.rowBody}><Text style={styles.title}>Biometric authentication</Text><Text style={styles.meta}>{biometricAvailable ? 'Fingerprint o face unlock kapag binubuksan ang app.' : 'Mag-enroll muna ng fingerprint o face unlock sa device.'}</Text></View><Switch value={biometricEnabled} onValueChange={changeBiometric} trackColor={{ false: colors.line, true: colors.greenSoft }} thumbColor={biometricEnabled ? colors.green : colors.muted}/></View></View>
+    <View style={styles.card}><View style={styles.row}><View style={styles.iconBox}><Ionicons name="finger-print-outline" size={19} color={colors.green} /></View><View style={styles.rowBody}><Text style={styles.title}>Biometric authentication</Text><Text style={styles.meta}>{biometricAvailable ? 'Use fingerprint or face unlock when opening the app.' : 'Set up fingerprint or face unlock on your device first.'}</Text></View><Switch value={biometricEnabled} onValueChange={changeBiometric} trackColor={{ false: colors.line, true: colors.greenSoft }} thumbColor={biometricEnabled ? colors.green : colors.muted}/></View></View>
 
     <Text style={styles.section}>Notifications</Text>
     <View style={styles.card}>
-      <View style={styles.row}><View style={styles.iconBox}><Ionicons name="notifications-outline" size={19} color={colors.green} /></View><View style={styles.rowBody}><Text style={styles.title}>Push notifications</Text><Text style={styles.meta}>{enabled ? 'Naka-on ang local reminder notifications' : 'Naka-off ang reminder notifications'}</Text></View><Switch value={enabled} onValueChange={changeNotifications} disabled={busy} trackColor={{ false: colors.line, true: colors.greenSoft }} thumbColor={enabled ? colors.green : colors.surface} /></View>
+      <View style={styles.row}><View style={styles.iconBox}><Ionicons name="notifications-outline" size={19} color={colors.green} /></View><View style={styles.rowBody}><Text style={styles.title}>Push notifications</Text><Text style={styles.meta}>{enabled ? 'Local reminder notifications are on' : 'Reminder notifications are off'}</Text></View><Switch value={enabled} onValueChange={changeNotifications} disabled={busy} trackColor={{ false: colors.line, true: colors.greenSoft }} thumbColor={enabled ? colors.green : colors.surface} /></View>
       <View style={styles.divider} />
-      <View style={styles.statusRow}><View style={[styles.statusDot, permission?.granted ? styles.statusOn : styles.statusOff]} /><Text style={styles.statusText}>{permission?.granted ? 'Pinayagan sa Android' : permission?.canAskAgain === false ? 'Naka-block sa Android' : 'Hindi pa na-enable sa Android'}</Text></View>
-      <Pressable onPress={() => router.push('/reminders')} style={styles.secondaryButton}><Ionicons name="list-outline" size={16} color={colors.green} /><Text style={styles.secondaryText}>Buksan ang reminders</Text></Pressable>
-      {permission?.granted ? null : <Pressable onPress={openSystemSettings} style={styles.secondaryButton}><Ionicons name="settings-outline" size={16} color={colors.green} /><Text style={styles.secondaryText}>Buksan ang permission settings</Text></Pressable>}
+      <View style={styles.statusRow}><View style={[styles.statusDot, permission?.granted ? styles.statusOn : styles.statusOff]} /><Text style={styles.statusText}>{permission?.granted ? 'Allowed in Android' : permission?.canAskAgain === false ? 'Blocked in Android' : 'Not enabled in Android'}</Text></View>
+      <Pressable onPress={() => router.push('/reminders')} style={styles.secondaryButton}><Ionicons name="list-outline" size={16} color={colors.green} /><Text style={styles.secondaryText}>Open reminders</Text></Pressable>
+      {permission?.granted ? null : <Pressable onPress={openSystemSettings} style={styles.secondaryButton}><Ionicons name="settings-outline" size={16} color={colors.green} /><Text style={styles.secondaryText}>Open permission settings</Text></Pressable>}
     </View>
     {message ? <View style={styles.message}><Ionicons name="information-circle-outline" size={17} color={colors.green} /><Text style={styles.messageText}>{message}</Text></View> : null}
 
-    <Text style={styles.section}>Privacy at storage</Text>
+    <Text style={styles.section}>Privacy and storage</Text>
     <View style={styles.card}>
-      <View style={styles.row}><View style={styles.iconBox}><Ionicons name="phone-portrait-outline" size={19} color={colors.green} /></View><View style={styles.rowBody}><Text style={styles.title}>Device-only data</Text><Text style={styles.meta}>Plans, notes, records, at reminders ay nasa local database ng phone mo.</Text></View></View>
+      <View style={styles.row}><View style={styles.iconBox}><Ionicons name="phone-portrait-outline" size={19} color={colors.green} /></View><View style={styles.rowBody}><Text style={styles.title}>Device-only data</Text><Text style={styles.meta}>Plans, notes, records, and reminders are stored in your phone’s local database.</Text></View></View>
       <View style={styles.divider} />
-      <View style={styles.row}><View style={styles.iconBox}><Ionicons name="cloud-offline-outline" size={19} color={colors.green} /></View><View style={styles.rowBody}><Text style={styles.title}>Offline by default</Text><Text style={styles.meta}>Walang account o cloud sync na kailangan. Android ang naghahatid ng local notification.</Text></View></View>
+      <View style={styles.row}><View style={styles.iconBox}><Ionicons name="cloud-offline-outline" size={19} color={colors.green} /></View><View style={styles.rowBody}><Text style={styles.title}>Offline by default</Text><Text style={styles.meta}>No account or cloud sync is required. Android delivers local notifications.</Text></View></View>
     </View>
 
-    <Text style={styles.section}>Backup at restore</Text>
+    <Text style={styles.section}>Backup and restore</Text>
     <Pressable accessibilityRole="button" onPress={() => { setBackupMessage(''); setBackupOpen(true); }} style={styles.card}>
-      <View style={styles.row}><View style={styles.iconBox}><Ionicons name="cloud-download-outline" size={19} color={colors.green} /></View><View style={styles.rowBody}><Text style={styles.title}>Backup at restore</Text><Text style={styles.meta}>Gumawa ng local backup o pumili ng dati mong backup file.</Text></View><Ionicons name="chevron-forward" size={18} color={colors.muted} /></View>
+      <View style={styles.row}><View style={styles.iconBox}><Ionicons name="cloud-download-outline" size={19} color={colors.green} /></View><View style={styles.rowBody}><Text style={styles.title}>Backup and restore</Text><Text style={styles.meta}>Create a local backup or choose an existing backup file.</Text></View><Ionicons name="chevron-forward" size={18} color={colors.muted} /></View>
     </Pressable>
 
     <Text style={styles.section}>App</Text>
-    <View style={styles.card}><View style={styles.row}><View style={styles.iconBox}><Ionicons name="leaf-outline" size={19} color={colors.green} /></View><View style={styles.rowBody}><Text style={styles.title}>JW Organizer</Text><Text style={styles.meta}>Bersyon 1.0.0 · Forest green</Text></View><Ionicons name="checkmark-circle" size={19} color={colors.green} /></View></View>
+    <View style={styles.card}><View style={styles.row}><View style={styles.iconBox}><Ionicons name="leaf-outline" size={19} color={colors.green} /></View><View style={styles.rowBody}><Text style={styles.title}>JW Organizer</Text><Text style={styles.meta}>Version 1.0.0 · Forest green</Text></View><Ionicons name="checkmark-circle" size={19} color={colors.green} /></View></View>
     <Text style={styles.section}>App updates</Text>
     <AppUpdateCard />
-    <Text style={styles.privacy}>JW Organizer · Ginawa para sa personal na paggamit</Text>
+    <Text style={styles.privacy}>JW Organizer · Made for personal use</Text>
   </ScrollView>
   <Modal visible={profileEditorOpen} animationType="slide" transparent onRequestClose={() => setProfileEditorOpen(false)}>
     <View style={styles.modalBackdrop}><View style={styles.modalCard}>
-      <View style={styles.modalHeader}><Text style={styles.modalTitle}>I-edit ang profile</Text><Pressable accessibilityLabel="Isara" onPress={() => setProfileEditorOpen(false)}><Ionicons name="close" size={22} color={colors.ink} /></Pressable></View>
-      <Pressable onPress={choosePhoto} style={styles.photoPicker}>{photo ? <Image source={{ uri: photo }} style={styles.photoPreview} /> : <View style={styles.photoPlaceholder}><Ionicons name="person" size={30} color={colors.green} /></View>}<View style={styles.photoHint}><Ionicons name="camera-outline" size={16} color={colors.green} /><Text style={styles.secondaryText}>Pumili ng photo</Text></View></Pressable>
-      <Text style={styles.fieldLabel}>Pangalan</Text><TextInput value={name} onChangeText={(value) => { setName(value); setProfileMessage(''); }} placeholder="Ilagay ang pangalan" placeholderTextColor={colors.muted} style={styles.input} />
+      <View style={styles.modalHeader}><Text style={styles.modalTitle}>Edit profile</Text><Pressable accessibilityLabel="Close" onPress={() => setProfileEditorOpen(false)}><Ionicons name="close" size={22} color={colors.ink} /></Pressable></View>
+      <Pressable onPress={choosePhoto} style={styles.photoPicker}>{photo ? <Image source={{ uri: photo }} style={styles.photoPreview} /> : <View style={styles.photoPlaceholder}><Ionicons name="person" size={30} color={colors.green} /></View>}<View style={styles.photoHint}><Ionicons name="camera-outline" size={16} color={colors.green} /><Text style={styles.secondaryText}>Choose photo</Text></View></Pressable>
+      <Text style={styles.fieldLabel}>Name</Text><TextInput value={name} onChangeText={(value) => { setName(value); setProfileMessage(''); }} placeholder="Enter a name" placeholderTextColor={colors.muted} style={styles.input} />
       <Text style={styles.fieldLabel}>Role</Text><TextInput value={role} onChangeText={(value) => { setRole(value); setProfileMessage(''); }} placeholder="Hal. Publisher" placeholderTextColor={colors.muted} style={styles.input} />
-      <Pressable onPress={saveProfile} style={styles.saveButton}><Text style={styles.saveButtonText}>I-save ang profile</Text></Pressable>
+      <Pressable onPress={saveProfile} style={styles.saveButton}><Text style={styles.saveButtonText}>Save profile</Text></Pressable>
     </View></View>
   </Modal>
   <Modal visible={backupOpen} animationType="slide" transparent onRequestClose={() => setBackupOpen(false)}>
     <View style={styles.modalBackdrop}><View style={styles.modalCard}>
-      <View style={styles.modalHeader}><Text style={styles.modalTitle}>Backup at restore</Text><Pressable accessibilityLabel="Isara" onPress={() => setBackupOpen(false)}><Ionicons name="close" size={22} color={colors.ink} /></Pressable></View>
-      <Text style={styles.meta}>I-save ang data bilang JSON sa Google Drive o sa phone. Para magbalik ng data, pumili ng JW Organizer backup file.</Text>
-      <Pressable onPress={exportBackup} style={styles.backupAction}><View style={styles.iconBox}><Ionicons name="share-outline" size={19} color={colors.green} /></View><View style={styles.rowBody}><Text style={styles.title}>Gumawa ng backup</Text><Text style={styles.meta}>Buksan ang share menu para piliin ang Drive o local storage.</Text></View><Ionicons name="chevron-forward" size={18} color={colors.muted} /></Pressable>
-      <Pressable onPress={importBackup} style={styles.backupAction}><View style={styles.iconBox}><Ionicons name="refresh-outline" size={19} color={colors.green} /></View><View style={styles.rowBody}><Text style={styles.title}>I-restore ang backup</Text><Text style={styles.meta}>Pumili ng dating JSON backup; hihingi muna ng kumpirmasyon.</Text></View><Ionicons name="chevron-forward" size={18} color={colors.muted} /></Pressable>
-      <View style={styles.googleBackup}><Ionicons name="logo-google" size={17} color={colors.green} /><View style={styles.rowBody}><Text style={styles.title}>Google device backup</Text><Text style={styles.meta}>Kasama ang app data sa Android backup kapag naka-enable ang Google One/device backup sa phone settings.</Text></View></View>
+      <View style={styles.modalHeader}><Text style={styles.modalTitle}>Backup and restore</Text><Pressable accessibilityLabel="Close" onPress={() => setBackupOpen(false)}><Ionicons name="close" size={22} color={colors.ink} /></Pressable></View>
+      <Text style={styles.meta}>Save your data as JSON to Google Drive or your phone. To restore it, choose a JW Organizer backup file.</Text>
+      <Pressable onPress={exportBackup} style={styles.backupAction}><View style={styles.iconBox}><Ionicons name="share-outline" size={19} color={colors.green} /></View><View style={styles.rowBody}><Text style={styles.title}>Create backup</Text><Text style={styles.meta}>Open the share menu to choose Drive or local storage.</Text></View><Ionicons name="chevron-forward" size={18} color={colors.muted} /></Pressable>
+      <Pressable onPress={importBackup} style={styles.backupAction}><View style={styles.iconBox}><Ionicons name="refresh-outline" size={19} color={colors.green} /></View><View style={styles.rowBody}><Text style={styles.title}>Restore backup</Text><Text style={styles.meta}>Choose an existing JSON backup. Confirmation is required before restoring.</Text></View><Ionicons name="chevron-forward" size={18} color={colors.muted} /></Pressable>
+      <View style={styles.googleBackup}><Ionicons name="logo-google" size={17} color={colors.green} /><View style={styles.rowBody}><Text style={styles.title}>Google device backup</Text><Text style={styles.meta}>App data is included in Android backup when Google One or device backup is enabled in your phone settings.</Text></View></View>
       {backupMessage ? <Text style={styles.profileMessage}>{backupMessage}</Text> : null}
     </View></View>
   </Modal>

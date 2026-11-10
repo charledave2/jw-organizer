@@ -7,6 +7,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { TrackerProvider } from '../state/TrackerContext';
 import { AppThemeProvider, useAppTheme } from '../ui/theme';
 import { BiometricGate } from '../ui/BiometricGate';
+import { AppUpdateManager } from '../ui/AppUpdateCard';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Notifications from 'expo-notifications';
 
@@ -41,14 +42,15 @@ function AppTabs() {
   return <TrackerProvider>
     <BiometricGate>
       <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
+      <AppUpdateManager />
       <Tabs screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.green,
         tabBarInactiveTintColor: colors.muted,
         tabBarStyle: {
-          height: 58 + insets.bottom,
-          paddingTop: 6,
-          paddingBottom: Math.max(5, insets.bottom),
+          height: 68 + insets.bottom,
+          paddingTop: 8,
+          paddingBottom: Math.max(7, insets.bottom),
           backgroundColor: colors.surface,
           borderTopColor: colors.line,
           elevation: 0,
@@ -81,5 +83,5 @@ const splashStyles = StyleSheet.create({
   image: { width: 146, height: 146 },
   appName: { marginTop: 22, color: '#FFFFFF', fontSize: 23, fontWeight: '700', letterSpacing: 0.2 },
   tagline: { marginTop: 6, color: '#D7E7DD', fontSize: 12, fontWeight: '500', letterSpacing: 0.4 },
-  homeTab: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', borderWidth: 4, marginTop: -19, elevation: 4 },
+  homeTab: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', borderWidth: 4, marginTop: -15, elevation: 4 },
 });
