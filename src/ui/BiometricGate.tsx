@@ -18,7 +18,7 @@ export function BiometricGate({ children }: React.PropsWithChildren) {
     const result = await LocalAuthentication.authenticateAsync({
       promptMessage: 'Unlock JW Organizer',
       promptDescription: 'Use fingerprint or face unlock to open the app.',
-      cancelLabel: 'Kanselahin',
+      cancelLabel: 'Cancel',
       biometricsSecurityLevel: 'weak',
     });
     setUnlocked(result.success);

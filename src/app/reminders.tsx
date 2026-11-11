@@ -85,7 +85,7 @@ export default function RemindersScreen() {
   const remove = async (item: Reminder) => { await cancelReminderNotification(item.notification_id); await removeReminder(item.id); await refresh(); };
 
   return <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-    <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+    <KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS==='ios'?'padding':'height'}><ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
       <View style={styles.header}><View style={{ flex: 1 }}><Text style={styles.heading}>Reminders</Text><Text style={styles.subtitle}>Local alerts for important tasks.</Text></View><Pressable accessibilityLabel="Add reminder" onPress={openNew} style={styles.addButton}><Ionicons name="add" size={22} color={colors.surface} /></Pressable></View>
       <SearchInput value={query} onChangeText={setQuery} placeholder="Search reminders" />
       <FilterRow options={[{ value: 'upcoming', label: 'Upcoming' }, { value: 'overdue', label: 'Overdue' }, { value: 'completed', label: 'Completed' }, { value: 'all', label: 'All' }]} value={filter} onChange={setFilter} />
@@ -101,11 +101,11 @@ export default function RemindersScreen() {
         </View>;
       }) : <View style={styles.empty}><View style={styles.emptyIcon}><Ionicons name="notifications-outline" size={23} color={colors.green} /></View><Text style={styles.emptyTitle}>{query ? 'No matches' : 'No reminders yet'}</Text><Text style={styles.meta}>{query ? 'Try another search or filter.' : 'Tap + to create your first reminder.'}</Text></View>}
       <Text style={styles.privacy}><Ionicons name="lock-closed-outline" size={12} color={colors.muted} />  Saved only on your device</Text>
-    </ScrollView>
+    </ScrollView></KeyboardAvoidingView>
 
     <Modal visible={visible} animationType="slide" transparent onRequestClose={() => setVisible(false)}><KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}><View style={styles.backdrop}><View style={styles.sheet}><View style={styles.handle} /><View style={styles.sheetHeader}><View><Text style={styles.sheetTitle}>{editing ? 'Edit reminder' : 'New reminder'}</Text><Text style={styles.sheetSubtitle}>This will be saved in the app and available offline.</Text></View><Pressable onPress={() => setVisible(false)}><Ionicons name="close" size={23} color={colors.ink} /></Pressable></View><ScrollView keyboardShouldPersistTaps="handled">
       <Text style={styles.label}>Uri</Text><View style={styles.pills}>{categories.map((category) => <Pressable key={category} onPress={() => setForm({ ...form, category })} style={[styles.pill, form.category === category && styles.pillActive]}><Text style={[styles.pillText, form.category === category && styles.pillTextActive]}>{category}</Text></Pressable>)}</View>
-      <Text style={styles.label}>Title</Text><TextInput placeholder="Hal. Balikan si Maria" placeholderTextColor={colors.muted} value={form.title} onChangeText={(title) => setForm({ ...form, title })} style={styles.input} />
+      <Text style={styles.label}>Title</Text><TextInput placeholder="Example: Visit Maria" placeholderTextColor={colors.muted} value={form.title} onChangeText={(title) => setForm({ ...form, title })} style={styles.input} />
       <View style={styles.split}><DateField label="Date" value={form.reminder_date} onChange={(reminder_date) => setForm({ ...form, reminder_date })} /><TimeField label="Time" value={form.reminder_time} onChange={(reminder_time) => setForm({ ...form, reminder_time })} /></View>
       <RichTextEditor value={form.details} onChange={(details) => setForm({ ...form, details })} placeholder="Place, topic, or additional details" minHeight={100}/>
       {error ? <Text style={styles.error}>{error}</Text> : null}<Pressable onPress={save} style={styles.save}><Text style={styles.saveText}>Save reminder</Text></Pressable>

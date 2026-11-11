@@ -73,7 +73,6 @@ export default function HomeScreen() {
         <View style={styles.topBar}>
           <View style={styles.brandMark}><Ionicons name="leaf" size={18} color={colors.surface} /></View>
           <Text style={styles.brandName}>JW Organizer</Text>
-          <View style={styles.avatar} accessibilityLabel="Profile"><Text style={styles.avatarText}>{profileName.trim().charAt(0).toLocaleUpperCase() || 'P'}</Text></View>
         </View>
 
         <View style={styles.greetingBlock}>
@@ -84,23 +83,23 @@ export default function HomeScreen() {
 
         <View style={styles.timerCard}>
           <View style={styles.timerCardHeader}>
-            <View style={styles.timerLabelWrap}><View style={[styles.liveDot, isRunning && styles.liveDotActive]} /><Text style={styles.timerLabel}>{isRunning ? 'TIMER RUNNING' : elapsedSeconds ? 'NA-PAUSE' : 'FIELD SERVICE'}</Text></View>
+            <View style={styles.timerLabelWrap}><View style={[styles.liveDot, isRunning && styles.liveDotActive]} /><Text style={styles.timerLabel}>{isRunning ? 'TIMER RUNNING' : elapsedSeconds ? 'PAUSED' : 'FIELD SERVICE'}</Text></View>
             <Ionicons name="time-outline" size={18} color={colors.muted} />
           </View>
           <Text style={styles.timerValue}>{formatClock(elapsedSeconds)}</Text>
-          <Text style={styles.timerHint}>{isRunning ? 'Field service timer is running' : elapsedSeconds ? 'Resume when you are ready' : 'Handa ka na bang magsimula?'}</Text>
+          <Text style={styles.timerHint}>{isRunning ? 'Field service timer is running' : elapsedSeconds ? 'Resume when you are ready' : 'Ready to begin?'}</Text>
           <View style={styles.timerActions}>
             <Pressable onPress={timerAction} style={[styles.primaryButton, isRunning && styles.secondaryButton]}>
               <Ionicons name={isRunning ? 'pause' : 'play'} size={17} color={isRunning ? colors.green : colors.surface} />
               <Text style={[styles.primaryButtonText, isRunning && styles.secondaryButtonText]}>{isRunning ? 'Pause' : elapsedSeconds ? 'Resume' : 'Start timer'}</Text>
             </Pressable>
-            {(isRunning || elapsedSeconds > 0) && <Pressable onPress={() => { if (isRunning) pause(); setCounts(zeroCounts); setLogVisible(true); }} style={styles.finishButton}><Text style={styles.finishButtonText}>Tapusin</Text></Pressable>}
+            {(isRunning || elapsedSeconds > 0) && <Pressable onPress={() => { if (isRunning) pause(); setCounts(zeroCounts); setLogVisible(true); }} style={styles.finishButton}><Text style={styles.finishButtonText}>Finish</Text></Pressable>}
           </View>
         </View>
 
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Ngayong araw</Text>
-          <Text style={styles.sectionLink}>Buod</Text>
+          <Text style={styles.sectionTitle}>Today</Text>
+          <Text style={styles.sectionLink}>Summary</Text>
         </View>
         <View style={styles.statsStrip}>
           <View style={styles.statItem}><Text style={styles.statValue}>{formatDuration(todaySeconds)}</Text><Text style={styles.statLabel}>Time</Text></View>
@@ -111,7 +110,7 @@ export default function HomeScreen() {
         </View>
 
         <View style={[styles.sectionHeader, { marginTop: spacing.xl }]}>
-          <Text style={styles.sectionTitle}>Kamakailang activity</Text>
+          <Text style={styles.sectionTitle}>Recent activity</Text>
           <Pressable onPress={() => router.push('/calendar')}><Text style={styles.sectionLink}>View all</Text></Pressable>
         </View>
         {recentSessions.length ? (
@@ -149,8 +148,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   topBar: { height: 52, flexDirection: 'row', alignItems: 'center', gap: 10 },
   brandMark: { width: 30, height: 30, borderRadius: 10, backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center' },
   brandName: { flex: 1, fontSize: 16, fontWeight: '700', color: colors.ink, letterSpacing: -0.25 },
-  avatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.line, alignItems: 'center', justifyContent: 'center' },
-  avatarText: { color: colors.ink, fontSize: 13, fontWeight: '700' },
   greetingBlock: { marginTop: 19, marginBottom: 21 },
   eyebrow: { color: colors.muted, fontSize: 12, fontWeight: '500', textTransform: 'capitalize' },
   greeting: { fontSize: 28, color: colors.ink, fontWeight: '700', letterSpacing: -0.9, marginTop: 3 },

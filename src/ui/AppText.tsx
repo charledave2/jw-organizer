@@ -13,6 +13,6 @@ export function AppText({ style, ...props }: TextProps) {
   return <NativeText {...props} style={[{ fontFamily: fontFor(style) }, style]} />;
 }
 
-export const AppTextInput = React.forwardRef<NativeTextInput, TextInputProps>(function AppTextInput({ style, ...props }, ref) {
-  return <NativeTextInput ref={ref} {...props} style={[{ fontFamily: fontFor(style) }, style]} />;
-});
+export function AppTextInput({ style, ...props }: TextInputProps) {
+  return <NativeTextInput {...props} style={[{ fontFamily: fontFor(style) }, style]} />;
+}

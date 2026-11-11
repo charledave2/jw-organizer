@@ -36,6 +36,10 @@
         "expo-local-authentication",
         { "faceIDPermission": "Allow JW Organizer to use Face ID." }
       ],
+      [
+        "expo-location",
+        { "locationWhenInUsePermission": "Allow JW Organizer to add your current address to a Bible study or return visit record." }
+      ],
       "@react-native-community/datetimepicker"
     ],
     "ios": {
@@ -44,7 +48,7 @@
     "android": {
       "package": "com.charledave.jworganizer",
       "versionCode": 1,
-      "allowBackup": true,
+      "allowBackup": false,
       "permissions": ["android.permission.REQUEST_INSTALL_PACKAGES"],
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
