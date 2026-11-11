@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { AppState } from 'react-native';
-import { getSessions, getTimerState, localDateKey, saveSession, ServiceSession, updateTimerState } from '../data/database';
+import { clearAllSessions, getSessions, getTimerState, localDateKey, saveSession, ServiceSession, updateTimerState } from '../data/database';
 
 type SessionCounts = { placements: number; videos: number; returnVisits: number; bibleStudies: number };
 type TrackerValue = {
@@ -12,6 +12,7 @@ type TrackerValue = {
   pause: () => Promise<void>;
   finish: (counts: SessionCounts) => Promise<void>;
   refreshSessions: () => Promise<void>;
+  clearSessions: () => Promise<void>;
 };
 
 const TrackerContext = createContext<TrackerValue | null>(null);
@@ -24,6 +25,10 @@ export function TrackerProvider({ children }: React.PropsWithChildren) {
   const [ready, setReady] = useState(false);
 
   const refreshSessions = useCallback(async () => setSessions(await getSessions()), []);
+  const clearSessions = useCallback(async () => {
+    await clearAllSessions();
+    setSessions([]);
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -92,7 +97,7 @@ export function TrackerProvider({ children }: React.PropsWithChildren) {
     await updateTimerState(null, 0);
   }, [elapsedSeconds, startedAt]);
 
-  const value = useMemo(() => ({ sessions, elapsedSeconds, isRunning: startedAt !== null, ready, start, pause, finish, refreshSessions }), [sessions, elapsedSeconds, startedAt, ready, start, pause, finish, refreshSessions]);
+  const value = useMemo(() => ({ sessions, elapsedSeconds, isRunning: startedAt !== null, ready, start, pause, finish, refreshSessions, clearSessions }), [sessions, elapsedSeconds, startedAt, ready, start, pause, finish, refreshSessions, clearSessions]);
   return <TrackerContext.Provider value={value}>{children}</TrackerContext.Provider>;
 }
 
