@@ -75,13 +75,14 @@ function AppTabs() {
       }}>
         <Tabs.Screen name="notes" options={{ title: 'Notes', tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'document-text' : 'document-text-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
         <Tabs.Screen name="records" options={{ title: 'Records', tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'people' : 'people-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
-        <Tabs.Screen name="index" options={{ title: 'Home', tabBarIcon: ({ focused }) => <View style={[splashStyles.homeTab, { backgroundColor: focused ? colors.green : colors.greenSoft, borderColor: colors.surface }]}><Ionicons name="leaf" color={focused ? '#FFFFFF' : colors.green} size={23} /></View> }} />
+        <Tabs.Screen name="index" options={{ title: 'Home', tabBarLabel: () => null, tabBarAccessibilityLabel: 'Home', tabBarIcon: ({ focused }) => <View style={[splashStyles.homeTab, { backgroundColor: focused ? colors.green : colors.greenSoft, borderColor: colors.surface }]}><Ionicons name="leaf" color={focused ? '#FFFFFF' : colors.green} size={23} /></View> }} />
         <Tabs.Screen name="plan" options={{ title: 'Personal', tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'book' : 'book-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
         <Tabs.Screen name="settings" options={{ title: 'Settings', tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'settings' : 'settings-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
         <Tabs.Screen name="calendar" options={{ href: null }} />
         <Tabs.Screen name="reports" options={{ href: null }} />
         <Tabs.Screen name="reminders" options={{ href: null }} />
         <Tabs.Screen name="more" options={{ href: null }} />
+        <Tabs.Screen name="map" options={{ href: null }} />
       </Tabs>
     </BiometricGate>
     <AnimatedSplash />

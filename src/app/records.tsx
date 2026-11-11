@@ -1,6 +1,7 @@
 import { AppText as Text, AppTextInput as TextInput } from '../ui/AppText';
 import { useCallback, useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -29,6 +30,7 @@ const dateLabel = (key: string) => { if (!key) return 'No follow-up scheduled'; 
 const localTodayKey = () => { const date=new Date(); return `${date.getFullYear()}-${`${date.getMonth()+1}`.padStart(2,'0')}-${`${date.getDate()}`.padStart(2,'0')}`; };
 
 export default function RecordsScreen() {
+  const router = useRouter();
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
   const [type,setType]=useState<RecordType>('Bible study');
@@ -74,7 +76,7 @@ export default function RecordsScreen() {
     return matchesQuery&&matchesFilter;
   });
   return <SafeAreaView style={styles.safe} edges={['top', 'bottom']}><KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS==='ios'?'padding':'height'}><ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-    <View style={styles.header}><View><Text style={styles.heading}>Records</Text><Text style={styles.subtitle}>Your Bible studies and return visits.</Text></View><Pressable accessibilityLabel="Add record" onPress={add} style={styles.addButton}><Ionicons name="add" size={22} color={colors.surface}/></Pressable></View>
+    <View style={styles.header}><View><Text style={styles.heading}>Records</Text><Text style={styles.subtitle}>Your Bible studies and return visits.</Text></View><View style={{flexDirection:'row',gap:8}}><Pressable accessibilityLabel="Open location map" onPress={()=>router.push('/map')} style={[styles.addButton,{backgroundColor:colors.greenSoft}]}><Ionicons name="map-outline" size={20} color={colors.green}/></Pressable><Pressable accessibilityLabel="Add record" onPress={add} style={styles.addButton}><Ionicons name="add" size={22} color={colors.surface}/></Pressable></View></View>
     <View style={styles.tabs}>{(['Bible study','Return visit'] as const).map((value)=><Pressable key={value} onPress={()=>setType(value)} style={[styles.tab,type===value&&styles.tabActive]}><Text style={[styles.tabText,type===value&&styles.tabTextActive]}>{value==='Bible study'?'Bible studies':'Return visits'}</Text></Pressable>)}</View>
     <SearchInput value={query} onChangeText={setQuery} placeholder="Search people or topics"/><FilterRow options={[{value:'all',label:'All'},{value:'followup',label:'Follow-up scheduled'},{value:'overdue',label:'Overdue'},{value:'unscheduled',label:'No date'}]} value={filter} onChange={setFilter}/>
     {visibleItems.length?visibleItems.map((item)=><Pressable key={item.id} onPress={()=>edit(item)} style={styles.card}><View style={styles.personIcon}><Ionicons name={type==='Bible study'?'book-outline':'chatbubble-ellipses-outline'} size={19} color={colors.green}/></View><View style={styles.cardBody}><Text style={styles.name}>{item.name}</Text><Text style={styles.meta}>{locationLabel(item.location)}</Text>{item.location?<Text style={styles.coordinates}>{locationCoordinates(item.location)}</Text>:null}<Text style={styles.follow}>{dateLabel(item.next_date)}</Text>{item.record_type==='Bible study'&&item.material?<Text style={styles.extra}>{item.material}{item.progress?` · ${item.progress}`:''}</Text>:null}{item.notes?<RichTextPreview value={item.notes} style={styles.note} numberOfLines={2}/>:null}</View><Pressable accessibilityLabel={`Delete ${item.name}`} onPress={async(e:any)=>{e.stopPropagation?.();await removeMinistryRecord(item.id);refresh();}} style={styles.delete}><Ionicons name="trash-outline" size={17} color={colors.muted}/></Pressable></Pressable>):<View style={styles.empty}><Ionicons name={type==='Bible study'?'book-outline':'chatbubble-ellipses-outline'} size={26} color={colors.green}/><Text style={styles.emptyTitle}>{query||filter!=='all'?'No matches':`No ${type==='Bible study'?'Bible studies':'return visits'} yet`}</Text><Text style={styles.meta}>{query||filter!=='all'?'Try another search or filter.':'Tap + to add a record.'}</Text></View>}

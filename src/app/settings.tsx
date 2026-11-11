@@ -10,6 +10,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
+import * as IntentLauncher from 'expo-intent-launcher';
 import { createLocalBackup, getAppSetting, restoreLocalBackup, setAppSetting } from '../data/database';
 import { refreshScheduledReminders } from '../data/notifications';
 import { useTracker } from '../state/TrackerContext';
@@ -74,6 +75,11 @@ export default function SettingsScreen() {
     } finally { setBusy(false); }
   };
   const openSystemSettings = async () => { try { await Linking.openSettings(); } catch { setMessage('System settings could not be opened on this device.'); } };
+  const openBatterySettings = async () => {
+    if (Platform.OS !== 'android') { Alert.alert('Battery settings', 'Battery optimization controls are available in Android system settings.'); return; }
+    try { await IntentLauncher.startActivityAsync(IntentLauncher.ActivityAction.IGNORE_BATTERY_OPTIMIZATION_SETTINGS); }
+    catch { try { await IntentLauncher.startActivityAsync(IntentLauncher.ActivityAction.BATTERY_SAVER_SETTINGS); } catch { setMessage('Battery settings could not be opened on this device.'); } }
+  };
   const saveProfile = async () => { await setAppSetting('profile_name', name.trim()); await setAppSetting('profile_role', role.trim() || 'Publisher'); await setAppSetting('profile_photo', photo); setProfileMessage('Profile saved on this device.'); setProfileEditorOpen(false); };
   const choosePhoto = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -155,6 +161,11 @@ export default function SettingsScreen() {
       <Pressable onPress={() => router.push('/reminders')} style={styles.secondaryButton}><Ionicons name="list-outline" size={16} color={colors.green} /><Text style={styles.secondaryText}>Open reminders</Text></Pressable>
       {permission?.granted ? null : <Pressable onPress={openSystemSettings} style={styles.secondaryButton}><Ionicons name="settings-outline" size={16} color={colors.green} /><Text style={styles.secondaryText}>Open permission settings</Text></Pressable>}
     </View>
+
+    <Text style={styles.section}>Battery</Text>
+    <Pressable accessibilityRole="button" onPress={openBatterySettings} style={styles.card}>
+      <View style={styles.row}><View style={styles.iconBox}><Ionicons name="battery-charging-outline" size={19} color={colors.green} /></View><View style={styles.rowBody}><Text style={styles.title}>Allow background activity</Text><Text style={styles.meta}>For longer sessions, set JW Organizer to Unrestricted in Android battery settings. The system may still manage apps based on your device settings.</Text></View><Ionicons name="chevron-forward" size={18} color={colors.muted} /></View>
+    </Pressable>
     {message ? <View style={styles.message}><Ionicons name="information-circle-outline" size={17} color={colors.green} /><Text style={styles.messageText}>{message}</Text></View> : null}
 
     <Text style={styles.section}>Privacy and storage</Text>
