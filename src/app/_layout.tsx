@@ -19,21 +19,39 @@ import { GoogleSans_700Bold } from '@expo-google-fonts/google-sans/700Bold';
 
 void SplashScreen.preventAutoHideAsync();
 
-function CenteredTabButton({ children, highlightColor, onPressIn, onPressOut, ...props }: any) {
-  const haloScale = useRef(new Animated.Value(0.72)).current;
+function CenteredTabButton({ children, highlightColor, onPress, onPressIn, onPressOut, ...props }: any) {
+  const haloScale = useRef(new Animated.Value(0.82)).current;
   const iconScale = useRef(new Animated.Value(1)).current;
+  const iconLift = useRef(new Animated.Value(0)).current;
+  const iconTilt = useRef(new Animated.Value(0)).current;
   const opacity = useRef(new Animated.Value(0)).current;
   const isCreateButton = props.accessibilityLabel === 'Create a note';
   const animatePress = (pressed: boolean) => {
     Animated.parallel([
-      Animated.spring(haloScale, { toValue: pressed ? 1 : 0.72, damping: 14, stiffness: 230, useNativeDriver: true }),
-      Animated.timing(opacity, { toValue: pressed ? 0.2 : 0, duration: pressed ? 90 : 170, useNativeDriver: true }),
-      ...(isCreateButton ? [Animated.spring(iconScale, { toValue: pressed ? 0.88 : 1, damping: 9, stiffness: 260, useNativeDriver: true })] : []),
+      Animated.spring(haloScale, { toValue: pressed ? 1 : 0.82, damping: 14, stiffness: 230, useNativeDriver: true }),
+      Animated.timing(opacity, { toValue: pressed ? 0.16 : 0, duration: pressed ? 70 : 150, useNativeDriver: true }),
+      ...(isCreateButton ? [
+        Animated.spring(iconScale, { toValue: pressed ? 0.82 : 1, damping: 8, stiffness: 300, useNativeDriver: true }),
+        Animated.spring(iconLift, { toValue: pressed ? -6 : 0, damping: 7, stiffness: 280, useNativeDriver: true }),
+        Animated.spring(iconTilt, { toValue: pressed ? 0.12 : 0, damping: 7, stiffness: 260, useNativeDriver: true }),
+      ] : []),
     ]).start();
   };
-  return <Pressable {...props} onPressIn={(event: any) => { onPressIn?.(event); animatePress(true); }} onPressOut={(event: any) => { onPressOut?.(event); animatePress(false); }}>
-    <Animated.View pointerEvents="none" style={[tabButtonStyles.touchHalo, { backgroundColor: highlightColor, opacity, width: isCreateButton ? 34 : 24, height: isCreateButton ? 34 : 24, borderRadius: isCreateButton ? 17 : 12, marginLeft: isCreateButton ? -17 : -12, marginTop: isCreateButton ? -27 : -22, transform: [{ scale: haloScale }] }]} />
-    <Animated.View style={isCreateButton ? { transform: [{ scale: iconScale }] } : undefined}>
+  const animateCreateTap = () => Animated.sequence([
+    Animated.parallel([
+      Animated.spring(iconLift, { toValue: -9, damping: 6, stiffness: 320, useNativeDriver: true }),
+      Animated.spring(iconScale, { toValue: 0.8, damping: 7, stiffness: 320, useNativeDriver: true }),
+      Animated.spring(iconTilt, { toValue: 0.14, damping: 6, stiffness: 300, useNativeDriver: true }),
+    ]),
+    Animated.parallel([
+      Animated.spring(iconLift, { toValue: 0, damping: 5, stiffness: 260, useNativeDriver: true }),
+      Animated.spring(iconScale, { toValue: 1, damping: 6, stiffness: 260, useNativeDriver: true }),
+      Animated.spring(iconTilt, { toValue: 0, damping: 6, stiffness: 250, useNativeDriver: true }),
+    ]),
+  ]).start();
+  return <Pressable {...props} onPress={(event: any) => { onPress?.(event); if (isCreateButton) animateCreateTap(); }} onPressIn={(event: any) => { onPressIn?.(event); animatePress(true); }} onPressOut={(event: any) => { onPressOut?.(event); animatePress(false); }}>
+    <Animated.View pointerEvents="none" style={[tabButtonStyles.touchHalo, { backgroundColor: highlightColor, opacity, width: 28, height: 28, borderRadius: 14, marginLeft: -14, marginTop: isCreateButton ? -25 : -20, transform: [{ scale: haloScale }] }]} />
+    <Animated.View style={isCreateButton ? { transform: [{ translateY: iconLift }, { scale: iconScale }, { rotate: iconTilt.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }] } : undefined}>
       {typeof children === 'function' ? children({ pressed: false }) : children}
     </Animated.View>
   </Pressable>;
