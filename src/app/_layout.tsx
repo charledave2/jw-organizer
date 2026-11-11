@@ -24,7 +24,7 @@ function CenteredTabButton({ children, highlightColor, onPressIn, onPressOut, ..
   const opacity = useRef(new Animated.Value(0)).current;
   const animatePress = (pressed: boolean) => Animated.parallel([
     Animated.spring(scale, { toValue: pressed ? 1 : 0.72, damping: 14, stiffness: 230, useNativeDriver: true }),
-    Animated.timing(opacity, { toValue: pressed ? 0.36 : 0, duration: pressed ? 90 : 170, useNativeDriver: true }),
+    Animated.timing(opacity, { toValue: pressed ? 0.24 : 0, duration: pressed ? 90 : 170, useNativeDriver: true }),
   ]).start();
   return <Pressable {...props} onPressIn={(event: any) => { onPressIn?.(event); animatePress(true); }} onPressOut={(event: any) => { onPressOut?.(event); animatePress(false); }}>
     <Animated.View pointerEvents="none" style={[tabButtonStyles.touchHalo, { backgroundColor: highlightColor, opacity, transform: [{ scale }] }]} />
@@ -86,9 +86,9 @@ function AppTabs() {
         tabBarHideOnKeyboard: true,
         tabBarButton: (props) => <CenteredTabButton {...props} highlightColor={colors.greenSoft} />,
       }}>
-        <Tabs.Screen name="notes" options={{ title: 'Notes', tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'document-text' : 'document-text-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
+        <Tabs.Screen name="index" options={{ title: 'Home', tabBarAccessibilityLabel: 'Home', tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'home' : 'home-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
         <Tabs.Screen name="records" options={{ title: 'Records', tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'people' : 'people-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
-        <Tabs.Screen name="index" options={{ title: 'Home', tabBarLabel: () => null, tabBarAccessibilityLabel: 'Home', tabBarIcon: ({ focused }) => <View style={[splashStyles.homeTab, { backgroundColor: focused ? colors.green : colors.greenSoft, borderColor: colors.surface }]}><Ionicons name="leaf" color={focused ? '#FFFFFF' : colors.green} size={23} /></View> }} />
+        <Tabs.Screen name="notes" options={{ title: 'Notes', tabBarLabel: () => null, tabBarAccessibilityLabel: 'Create a note', tabBarIcon: () => <View style={[splashStyles.createTab, { backgroundColor: colors.green, borderColor: colors.surface }]}><Ionicons name="add" color="#FFFFFF" size={29} /></View> }} />
         <Tabs.Screen name="plan" options={{ title: 'Personal', tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'book' : 'book-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
         <Tabs.Screen name="settings" options={{ title: 'Settings', tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'settings' : 'settings-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
         <Tabs.Screen name="calendar" options={{ href: null }} />
@@ -111,7 +111,7 @@ const splashStyles = StyleSheet.create({
   image: { width: 146, height: 146 },
   appName: { marginTop: 22, color: '#FFFFFF', fontSize: 23, fontWeight: '700', letterSpacing: 0.2 },
   tagline: { marginTop: 6, color: '#D7E7DD', fontSize: 12, fontWeight: '500', letterSpacing: 0.4 },
-  homeTab: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', borderWidth: 4, marginTop: -8, elevation: 10, shadowColor: '#101813', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.2, shadowRadius: 7, zIndex: 2 },
+  createTab: { width: 50, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center', borderWidth: 3, marginTop: -10, elevation: 8, shadowColor: '#101813', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.18, shadowRadius: 4, zIndex: 2 },
 });
 
-const tabButtonStyles = StyleSheet.create({ touchHalo: { position: 'absolute', top: 0, left: '50%', marginLeft: -25, width: 50, height: 50, borderRadius: 25 } });
+const tabButtonStyles = StyleSheet.create({ touchHalo: { position: 'absolute', top: '50%', left: '50%', marginLeft: -17, marginTop: -27, width: 34, height: 34, borderRadius: 17 } });

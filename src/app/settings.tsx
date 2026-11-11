@@ -15,7 +15,6 @@ import { createLocalBackup, getAppSetting, restoreLocalBackup, setAppSetting } f
 import { refreshScheduledReminders } from '../data/notifications';
 import { useTracker } from '../state/TrackerContext';
 import { ThemeColors, useAppTheme, spacing } from '../ui/theme';
-import { AppUpdateCard } from '../ui/AppUpdateCard';
 
 export default function SettingsScreen() {
   const { colors, mode, setMode } = useAppTheme();
@@ -180,10 +179,6 @@ export default function SettingsScreen() {
       <View style={styles.row}><View style={styles.iconBox}><Ionicons name="cloud-download-outline" size={19} color={colors.green} /></View><View style={styles.rowBody}><Text style={styles.title}>Backup and restore</Text><Text style={styles.meta}>Create a local backup or choose an existing backup file.</Text></View><Ionicons name="chevron-forward" size={18} color={colors.muted} /></View>
     </Pressable>
 
-    <Text style={styles.section}>App</Text>
-    <View style={styles.card}><View style={styles.row}><View style={styles.iconBox}><Ionicons name="leaf-outline" size={19} color={colors.green} /></View><View style={styles.rowBody}><Text style={styles.title}>JW Organizer</Text><Text style={styles.meta}>Version 1.0.0 · Forest green</Text></View><Ionicons name="checkmark-circle" size={19} color={colors.green} /></View></View>
-    <Text style={styles.section}>App updates</Text>
-    <AppUpdateCard />
     <Text style={styles.privacy}>JW Organizer · Made for personal use</Text>
   </ScrollView>
   <Modal visible={profileEditorOpen} animationType="slide" transparent onRequestClose={() => setProfileEditorOpen(false)}>
