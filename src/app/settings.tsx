@@ -2,7 +2,7 @@ import { AppText as Text, AppTextInput as TextInput } from '../ui/AppText';
 import { useCallback, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Alert, Image, KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Notifications from 'expo-notifications';
 import * as LocalAuthentication from 'expo-local-authentication';
@@ -19,7 +19,6 @@ import { ThemeColors, useAppTheme, spacing } from '../ui/theme';
 export default function SettingsScreen() {
   const { colors, mode, setMode } = useAppTheme();
   const styles = createStyles(colors);
-  const router = useRouter();
   const { refreshSessions } = useTracker();
   const [enabled, setEnabled] = useState(true);
   const [permission, setPermission] = useState<Notifications.PermissionResponse | null>(null);
@@ -157,7 +156,6 @@ export default function SettingsScreen() {
       <View style={styles.row}><View style={styles.iconBox}><Ionicons name="notifications-outline" size={19} color={colors.green} /></View><View style={styles.rowBody}><Text style={styles.title}>Push notifications</Text><Text style={styles.meta}>{enabled ? 'Local reminder notifications are on' : 'Reminder notifications are off'}</Text></View><Switch value={enabled} onValueChange={changeNotifications} disabled={busy} trackColor={{ false: colors.line, true: colors.greenSoft }} thumbColor={enabled ? colors.green : colors.surface} /></View>
       <View style={styles.divider} />
       <View style={styles.statusRow}><View style={[styles.statusDot, permission?.granted ? styles.statusOn : styles.statusOff]} /><Text style={styles.statusText}>{permission?.granted ? 'Allowed in Android' : permission?.canAskAgain === false ? 'Blocked in Android' : 'Not enabled in Android'}</Text></View>
-      <Pressable onPress={() => router.push('/reminders')} style={styles.secondaryButton}><Ionicons name="list-outline" size={16} color={colors.green} /><Text style={styles.secondaryText}>Open reminders</Text></Pressable>
       {permission?.granted ? null : <Pressable onPress={openSystemSettings} style={styles.secondaryButton}><Ionicons name="settings-outline" size={16} color={colors.green} /><Text style={styles.secondaryText}>Open permission settings</Text></Pressable>}
     </View>
 
