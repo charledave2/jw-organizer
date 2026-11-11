@@ -111,7 +111,7 @@ export default function HomeScreen() {
 
         <View style={[styles.sectionHeader, { marginTop: spacing.xl }]}>
           <Text style={styles.sectionTitle}>Recent activity</Text>
-          <Pressable onPress={() => router.push('/calendar')}><Text style={styles.sectionLink}>View all</Text></Pressable>
+          <Pressable onPress={() => router.push('/activity')}><Text style={styles.sectionLink}>View all</Text></Pressable>
         </View>
         {recentSessions.length ? (
           <View style={styles.sessionList}>{recentSessions.map((session) => <SessionRow key={session.id} session={session} />)}</View>

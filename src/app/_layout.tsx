@@ -79,6 +79,7 @@ function AppTabs() {
         <Tabs.Screen name="plan" options={{ title: 'Personal', tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'book' : 'book-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
         <Tabs.Screen name="settings" options={{ title: 'Settings', tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'settings' : 'settings-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
         <Tabs.Screen name="calendar" options={{ href: null }} />
+        <Tabs.Screen name="activity" options={{ href: null }} />
         <Tabs.Screen name="reports" options={{ href: null }} />
         <Tabs.Screen name="reminders" options={{ href: null }} />
         <Tabs.Screen name="more" options={{ href: null }} />
