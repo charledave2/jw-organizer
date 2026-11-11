@@ -291,6 +291,11 @@ export async function getSessions() {
   return db.getAllAsync<ServiceSession>('SELECT * FROM service_sessions ORDER BY started_at DESC');
 }
 
+export async function clearAllSessions() {
+  const db = await getDatabase();
+  await db.runAsync('DELETE FROM service_sessions');
+}
+
 export async function getTimerState() {
   const db = await getDatabase();
   return db.getFirstAsync<{ started_at_ms: number | null; elapsed_seconds: number }>(
