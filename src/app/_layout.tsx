@@ -82,7 +82,6 @@ function AppTabs() {
         <Tabs.Screen name="reports" options={{ href: null }} />
         <Tabs.Screen name="reminders" options={{ href: null }} />
         <Tabs.Screen name="more" options={{ href: null }} />
-        <Tabs.Screen name="map" options={{ href: null }} />
       </Tabs>
     </BiometricGate>
     <AnimatedSplash />
