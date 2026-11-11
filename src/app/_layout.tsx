@@ -20,15 +20,22 @@ import { GoogleSans_700Bold } from '@expo-google-fonts/google-sans/700Bold';
 void SplashScreen.preventAutoHideAsync();
 
 function CenteredTabButton({ children, highlightColor, onPressIn, onPressOut, ...props }: any) {
-  const scale = useRef(new Animated.Value(0.72)).current;
+  const haloScale = useRef(new Animated.Value(0.72)).current;
+  const iconScale = useRef(new Animated.Value(1)).current;
   const opacity = useRef(new Animated.Value(0)).current;
-  const animatePress = (pressed: boolean) => Animated.parallel([
-    Animated.spring(scale, { toValue: pressed ? 1 : 0.72, damping: 14, stiffness: 230, useNativeDriver: true }),
-    Animated.timing(opacity, { toValue: pressed ? 0.24 : 0, duration: pressed ? 90 : 170, useNativeDriver: true }),
-  ]).start();
+  const isCreateButton = props.accessibilityLabel === 'Create a note';
+  const animatePress = (pressed: boolean) => {
+    Animated.parallel([
+      Animated.spring(haloScale, { toValue: pressed ? 1 : 0.72, damping: 14, stiffness: 230, useNativeDriver: true }),
+      Animated.timing(opacity, { toValue: pressed ? 0.2 : 0, duration: pressed ? 90 : 170, useNativeDriver: true }),
+      ...(isCreateButton ? [Animated.spring(iconScale, { toValue: pressed ? 0.88 : 1, damping: 9, stiffness: 260, useNativeDriver: true })] : []),
+    ]).start();
+  };
   return <Pressable {...props} onPressIn={(event: any) => { onPressIn?.(event); animatePress(true); }} onPressOut={(event: any) => { onPressOut?.(event); animatePress(false); }}>
-    <Animated.View pointerEvents="none" style={[tabButtonStyles.touchHalo, { backgroundColor: highlightColor, opacity, transform: [{ scale }] }]} />
-    {typeof children === 'function' ? children({ pressed: false }) : children}
+    <Animated.View pointerEvents="none" style={[tabButtonStyles.touchHalo, { backgroundColor: highlightColor, opacity, width: isCreateButton ? 34 : 24, height: isCreateButton ? 34 : 24, borderRadius: isCreateButton ? 17 : 12, marginLeft: isCreateButton ? -17 : -12, marginTop: isCreateButton ? -27 : -22, transform: [{ scale: haloScale }] }]} />
+    <Animated.View style={isCreateButton ? { transform: [{ scale: iconScale }] } : undefined}>
+      {typeof children === 'function' ? children({ pressed: false }) : children}
+    </Animated.View>
   </Pressable>;
 }
 
@@ -78,8 +85,8 @@ function AppTabs() {
           elevation: 14,
           shadowColor: '#101813',
           shadowOffset: { width: 0, height: -5 },
-          shadowOpacity: mode === 'dark' ? 0.32 : 0.12,
-          shadowRadius: 12,
+          shadowOpacity: mode === 'dark' ? 0.22 : 0.12,
+          shadowRadius: mode === 'dark' ? 5 : 9,
           paddingHorizontal: 5,
         },
         tabBarLabelStyle: { fontSize: 10, fontWeight: '600', marginTop: 1 },
@@ -114,4 +121,4 @@ const splashStyles = StyleSheet.create({
   createTab: { width: 50, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center', borderWidth: 3, marginTop: -10, elevation: 8, shadowColor: '#101813', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.18, shadowRadius: 4, zIndex: 2 },
 });
 
-const tabButtonStyles = StyleSheet.create({ touchHalo: { position: 'absolute', top: '50%', left: '50%', marginLeft: -17, marginTop: -27, width: 34, height: 34, borderRadius: 17 } });
+const tabButtonStyles = StyleSheet.create({ touchHalo: { position: 'absolute', top: '50%', left: '50%' } });
