@@ -19,6 +19,19 @@ import { GoogleSans_700Bold } from '@expo-google-fonts/google-sans/700Bold';
 
 void SplashScreen.preventAutoHideAsync();
 
+function CenteredTabButton({ children, highlightColor, onPressIn, onPressOut, ...props }: any) {
+  const scale = useRef(new Animated.Value(0.72)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+  const animatePress = (pressed: boolean) => Animated.parallel([
+    Animated.spring(scale, { toValue: pressed ? 1 : 0.72, damping: 14, stiffness: 230, useNativeDriver: true }),
+    Animated.timing(opacity, { toValue: pressed ? 0.36 : 0, duration: pressed ? 90 : 170, useNativeDriver: true }),
+  ]).start();
+  return <Pressable {...props} onPressIn={(event: any) => { onPressIn?.(event); animatePress(true); }} onPressOut={(event: any) => { onPressOut?.(event); animatePress(false); }}>
+    <Animated.View pointerEvents="none" style={[tabButtonStyles.touchHalo, { backgroundColor: highlightColor, opacity, transform: [{ scale }] }]} />
+    {typeof children === 'function' ? children({ pressed: false }) : children}
+  </Pressable>;
+}
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }),
 });
@@ -71,7 +84,7 @@ function AppTabs() {
         },
         tabBarLabelStyle: { fontSize: 10, fontWeight: '600', marginTop: 1 },
         tabBarHideOnKeyboard: true,
-        tabBarButton: ({ children, onPress, onLongPress, accessibilityLabel, accessibilityState, testID, style }) => <Pressable onPress={onPress} onLongPress={onLongPress} accessibilityRole="button" accessibilityLabel={accessibilityLabel} accessibilityState={accessibilityState} testID={testID} style={style} android_ripple={{ color: colors.greenSoft, borderless: true, radius: 27 }}>{children}</Pressable>,
+        tabBarButton: (props) => <CenteredTabButton {...props} highlightColor={colors.greenSoft} />,
       }}>
         <Tabs.Screen name="notes" options={{ title: 'Notes', tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'document-text' : 'document-text-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
         <Tabs.Screen name="records" options={{ title: 'Records', tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'people' : 'people-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
@@ -100,3 +113,5 @@ const splashStyles = StyleSheet.create({
   tagline: { marginTop: 6, color: '#D7E7DD', fontSize: 12, fontWeight: '500', letterSpacing: 0.4 },
   homeTab: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', borderWidth: 4, marginTop: -8, elevation: 10, shadowColor: '#101813', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.2, shadowRadius: 7, zIndex: 2 },
 });
+
+const tabButtonStyles = StyleSheet.create({ touchHalo: { position: 'absolute', top: 0, left: '50%', marginLeft: -25, width: 50, height: 50, borderRadius: 25 } });
