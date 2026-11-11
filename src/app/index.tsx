@@ -1,8 +1,7 @@
 import { AppText as Text } from '../ui/AppText';
 import { useEffect, useMemo, useState } from 'react';
-import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTracker } from '../state/TrackerContext';
 import { formatClock, formatDayLabel, formatDuration } from '../ui/format';
@@ -45,8 +44,9 @@ function SessionRow({ session }: { session: ServiceSession }) {
 export default function HomeScreen() {
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
-  const { sessions, elapsedSeconds, isRunning, ready, start, pause, finish } = useTracker();
+  const { sessions, elapsedSeconds, isRunning, ready, start, pause, finish, clearSessions } = useTracker();
   const [logVisible, setLogVisible] = useState(false);
+  const [activityVisible, setActivityVisible] = useState(false);
   const [counts, setCounts] = useState(zeroCounts);
   const [profileName, setProfileName] = useState('');
   useEffect(() => { getAppSetting('profile_name', '').then(setProfileName); }, []);
@@ -111,7 +111,7 @@ export default function HomeScreen() {
 
         <View style={[styles.sectionHeader, { marginTop: spacing.xl }]}>
           <Text style={styles.sectionTitle}>Recent activity</Text>
-          <Pressable onPress={() => router.push('/activity')}><Text style={styles.sectionLink}>View all</Text></Pressable>
+          <Pressable onPress={() => setActivityVisible(true)}><Text style={styles.sectionLink}>View all</Text></Pressable>
         </View>
         {recentSessions.length ? (
           <View style={styles.sessionList}>{recentSessions.map((session) => <SessionRow key={session.id} session={session} />)}</View>
@@ -135,6 +135,25 @@ export default function HomeScreen() {
             <CountInput label="Return visits" value={counts.returnVisits} onChange={(returnVisits) => setCounts({ ...counts, returnVisits })} />
             <CountInput label="Bible studies" value={counts.bibleStudies} onChange={(bibleStudies) => setCounts({ ...counts, bibleStudies })} />
             <Pressable onPress={saveLog} style={styles.saveButton}><Text style={styles.saveButtonText}>Save session</Text></Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={activityVisible} animationType="slide" transparent onRequestClose={() => setActivityVisible(false)}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.activitySheet}>
+            <View style={styles.sheetHandle} />
+            <View style={styles.activityTitleRow}>
+              <View style={{ flex: 1 }}><Text style={styles.modalTitle}>All activity</Text><Text style={styles.modalSubtitle}>{sessions.length} saved {sessions.length === 1 ? 'session' : 'sessions'}</Text></View>
+              <Pressable accessibilityRole="button" accessibilityLabel="Clear recent activities" disabled={!sessions.length} onPress={() => Alert.alert('Clear activity?', 'This will permanently remove all saved field service sessions from this device.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Clear', style: 'destructive', onPress: () => { void clearSessions(); } }])} style={[styles.activityIconButton, !sessions.length && { opacity: 0.35 }]}>
+                <Ionicons name="trash-outline" size={17} color={colors.muted} />
+              </Pressable>
+              <Pressable accessibilityRole="button" accessibilityLabel="Close activity" onPress={() => setActivityVisible(false)} style={styles.activityIconButton}><Ionicons name="close" size={20} color={colors.ink} /></Pressable>
+            </View>
+            <ScrollView style={styles.activityScroll} contentContainerStyle={styles.activityList} showsVerticalScrollIndicator={false}>
+              {sessions.length ? sessions.map((session) => <SessionRow key={session.id} session={session} />) : <View style={styles.activityEmpty}><View style={styles.emptyIcon}><Ionicons name="time-outline" size={22} color={colors.green} /></View><Text style={styles.emptyTitle}>No activity yet</Text><Text style={styles.emptyText}>Your sessions will appear here after you log them.</Text></View>}
+            </ScrollView>
+            <Text style={styles.privacyNote}><Ionicons name="lock-closed-outline" size={12} color={colors.muted} />  Saved on your device</Text>
           </View>
         </View>
       </Modal>
@@ -189,6 +208,12 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   privacyNote: { color: colors.muted, fontSize: 11, alignSelf: 'center', marginTop: 17 },
   modalBackdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(20, 25, 22, 0.32)' },
   modalSheet: { backgroundColor: colors.surface, paddingHorizontal: 22, paddingTop: 10, paddingBottom: 28, borderTopLeftRadius: 27, borderTopRightRadius: 27 },
+  activitySheet: { height: '82%', backgroundColor: colors.surface, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 20, borderTopLeftRadius: 27, borderTopRightRadius: 27 },
+  activityTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingBottom: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line },
+  activityIconButton: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+  activityScroll: { flex: 1 },
+  activityList: { paddingTop: 6, paddingBottom: 6 },
+  activityEmpty: { alignItems: 'center', padding: 28, gap: 7 },
   sheetHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: colors.line, alignSelf: 'center', marginBottom: 18 },
   modalTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   modalTitle: { color: colors.ink, fontSize: 20, fontWeight: '700', letterSpacing: -0.45 },
