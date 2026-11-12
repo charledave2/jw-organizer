@@ -19,39 +19,41 @@ import { GoogleSans_700Bold } from '@expo-google-fonts/google-sans/700Bold';
 
 void SplashScreen.preventAutoHideAsync();
 
-function CenteredTabButton({ children, highlightColor, onPress, onPressIn, onPressOut, ...props }: any) {
-  const haloScale = useRef(new Animated.Value(0.82)).current;
+function CenteredTabButton({ children, highlightColor, onPress, onPressIn, onPressOut, accessibilityLabel, ...props }: any) {
+  const haloScale = useRef(new Animated.Value(0.75)).current;
   const iconScale = useRef(new Animated.Value(1)).current;
   const iconLift = useRef(new Animated.Value(0)).current;
-  const iconTilt = useRef(new Animated.Value(0)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
-  const isCreateButton = props.accessibilityLabel === 'Create a note';
+  const isCreateButton = accessibilityLabel === 'Create a note';
   const animatePress = (pressed: boolean) => {
     Animated.parallel([
-      Animated.spring(haloScale, { toValue: pressed ? 1 : 0.82, damping: 14, stiffness: 230, useNativeDriver: true }),
-      Animated.timing(opacity, { toValue: pressed ? 0.16 : 0, duration: pressed ? 70 : 150, useNativeDriver: true }),
+      Animated.spring(haloScale, { toValue: pressed ? 1 : 0.75, damping: 13, stiffness: 260, useNativeDriver: true }),
       ...(isCreateButton ? [
-        Animated.spring(iconScale, { toValue: pressed ? 0.82 : 1, damping: 8, stiffness: 300, useNativeDriver: true }),
-        Animated.spring(iconLift, { toValue: pressed ? -6 : 0, damping: 7, stiffness: 280, useNativeDriver: true }),
-        Animated.spring(iconTilt, { toValue: pressed ? 0.12 : 0, damping: 7, stiffness: 260, useNativeDriver: true }),
+        Animated.spring(iconScale, { toValue: pressed ? 0.88 : 1, damping: 8, stiffness: 300, useNativeDriver: true }),
       ] : []),
     ]).start();
   };
-  const animateCreateTap = () => Animated.sequence([
+  const animateCreateTap = () => {
+    iconLift.stopAnimation();
+    iconScale.stopAnimation();
+    iconLift.setValue(0);
+    iconScale.setValue(1);
+    Animated.sequence([
     Animated.parallel([
-      Animated.spring(iconLift, { toValue: -9, damping: 6, stiffness: 320, useNativeDriver: true }),
-      Animated.spring(iconScale, { toValue: 0.8, damping: 7, stiffness: 320, useNativeDriver: true }),
-      Animated.spring(iconTilt, { toValue: 0.14, damping: 6, stiffness: 300, useNativeDriver: true }),
+      Animated.timing(iconLift, { toValue: -10, duration: 110, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      Animated.sequence([
+        Animated.timing(iconScale, { toValue: 0.82, duration: 90, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.spring(iconScale, { toValue: 1.04, damping: 5, stiffness: 260, useNativeDriver: true }),
+      ]),
     ]),
     Animated.parallel([
-      Animated.spring(iconLift, { toValue: 0, damping: 5, stiffness: 260, useNativeDriver: true }),
-      Animated.spring(iconScale, { toValue: 1, damping: 6, stiffness: 260, useNativeDriver: true }),
-      Animated.spring(iconTilt, { toValue: 0, damping: 6, stiffness: 250, useNativeDriver: true }),
+      Animated.spring(iconLift, { toValue: 0, damping: 6, stiffness: 250, useNativeDriver: true }),
+      Animated.spring(iconScale, { toValue: 1, damping: 6, stiffness: 240, useNativeDriver: true }),
     ]),
-  ]).start();
-  return <Pressable {...props} onPress={(event: any) => { onPress?.(event); if (isCreateButton) animateCreateTap(); }} onPressIn={(event: any) => { onPressIn?.(event); animatePress(true); }} onPressOut={(event: any) => { onPressOut?.(event); animatePress(false); }}>
-    <Animated.View pointerEvents="none" style={[tabButtonStyles.touchHalo, { backgroundColor: highlightColor, opacity, width: 28, height: 28, borderRadius: 14, marginLeft: -14, marginTop: isCreateButton ? -25 : -20, transform: [{ scale: haloScale }] }]} />
-    <Animated.View style={isCreateButton ? { transform: [{ translateY: iconLift }, { scale: iconScale }, { rotate: iconTilt.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }] } : undefined}>
+    ]).start();
+  };
+  return <Pressable {...props} accessibilityLabel={accessibilityLabel} onPress={(event: any) => { onPress?.(event); if (isCreateButton) animateCreateTap(); }} onPressIn={(event: any) => { onPressIn?.(event); animatePress(true); }} onPressOut={(event: any) => { onPressOut?.(event); animatePress(false); }}>
+    <Animated.View pointerEvents="none" style={[tabButtonStyles.touchHalo, { backgroundColor: highlightColor, opacity: props.accessibilityState?.selected ? 1 : 0, width: isCreateButton ? 58 : 34, height: isCreateButton ? 58 : 34, borderRadius: isCreateButton ? 29 : 17, marginLeft: isCreateButton ? -29 : -17, marginTop: isCreateButton ? -25 : -17, transform: [{ scale: haloScale }] }]} />
+    <Animated.View style={isCreateButton ? { transform: [{ translateY: iconLift }, { scale: iconScale }] } : undefined}>
       {typeof children === 'function' ? children({ pressed: false }) : children}
     </Animated.View>
   </Pressable>;
@@ -137,7 +139,7 @@ function AppTabs() {
 function TabLabel({ title, color, focused, activeColor }: { title: string; color: ColorValue; focused: boolean; activeColor: string }) {
   return <View style={tabBarStyles.labelWrap}>
     <Text style={[tabBarStyles.label, { color }]} numberOfLines={1}>{title}</Text>
-    <View style={[tabBarStyles.activeMark, { backgroundColor: focused ? activeColor : 'transparent', opacity: focused ? 1 : 0 }]} />
+    <View style={tabBarStyles.activeMarkTrack}><Animated.View style={[tabBarStyles.activeMark, { backgroundColor: activeColor, transform: [{ scale: focused ? 1 : 0 }] }]} /></View>
   </View>;
 }
 
@@ -158,5 +160,6 @@ const tabBarStyles = StyleSheet.create({
   glassPill: { position: 'absolute', borderRadius: 30, borderWidth: 1, elevation: 16, shadowColor: '#101813', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.2, shadowRadius: 12 },
   labelWrap: { minHeight: 27, alignItems: 'center', justifyContent: 'flex-start' },
   label: { fontSize: 10, fontWeight: '600', lineHeight: 14 },
-  activeMark: { width: 22, height: 3, borderRadius: 2, marginTop: 4 },
+  activeMarkTrack: { width: 22, height: 4, marginTop: 4, alignItems: 'center', justifyContent: 'center' },
+  activeMark: { width: 6, height: 4, borderRadius: 3 },
 });
