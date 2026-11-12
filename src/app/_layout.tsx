@@ -1,6 +1,6 @@
 import { AppText as Text } from '../ui/AppText';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Image, Pressable, StyleSheet, View } from 'react-native';
+import { Animated, ColorValue, Easing, Image, Pressable, StyleSheet, View } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
@@ -94,28 +94,35 @@ function AppTabs() {
         tabBarActiveTintColor: colors.green,
         tabBarInactiveTintColor: colors.muted,
         tabBarStyle: {
-          height: 88 + insets.bottom,
-          paddingTop: 18,
-          paddingBottom: Math.max(10, insets.bottom),
-          backgroundColor: colors.surface,
-          borderTopColor: colors.line,
+          height: 90 + insets.bottom,
+          paddingTop: 6,
+          paddingBottom: Math.max(10, insets.bottom) + 8,
+          paddingHorizontal: 18,
+          backgroundColor: 'transparent',
           borderTopWidth: 0,
-          elevation: 14,
-          shadowColor: '#101813',
-          shadowOffset: { width: 0, height: -5 },
-          shadowOpacity: mode === 'dark' ? 0.22 : 0.12,
-          shadowRadius: mode === 'dark' ? 5 : 9,
-          paddingHorizontal: 5,
+          elevation: 0,
+          shadowOpacity: 0,
+          overflow: 'visible',
         },
-        tabBarLabelStyle: { fontSize: 10, fontWeight: '600', marginTop: 1 },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: '600', marginTop: 0 },
+        tabBarBackground: () => <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+          <View style={[tabBarStyles.glassPill, {
+            top: 6,
+            left: 18,
+            right: 18,
+            bottom: Math.max(10, insets.bottom) + 8,
+            backgroundColor: mode === 'dark' ? 'rgba(27,36,32,0.96)' : 'rgba(255,255,255,0.94)',
+            borderColor: colors.line,
+          }]} />
+        </View>,
         tabBarHideOnKeyboard: true,
         tabBarButton: (props) => <CenteredTabButton {...props} highlightColor={colors.greenSoft} />,
       }}>
-        <Tabs.Screen name="index" options={{ title: 'Home', tabBarAccessibilityLabel: 'Home', tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'home' : 'home-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
-        <Tabs.Screen name="records" options={{ title: 'Records', tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'people' : 'people-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
-        <Tabs.Screen name="notes" options={{ title: 'Notes', tabBarLabel: () => null, tabBarAccessibilityLabel: 'Create a note', tabBarIcon: () => <View style={[splashStyles.createTab, { backgroundColor: colors.green, borderColor: colors.surface }]}><Ionicons name="add" color="#FFFFFF" size={29} /></View> }} />
-        <Tabs.Screen name="plan" options={{ title: 'Personal', tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'book' : 'book-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
-        <Tabs.Screen name="settings" options={{ title: 'Settings', tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'settings' : 'settings-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
+        <Tabs.Screen name="index" options={{ title: 'Home', tabBarAccessibilityLabel: 'Home', tabBarLabel: ({ color, focused }) => <TabLabel title="Home" color={color} focused={focused} activeColor={colors.green} />, tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'home' : 'home-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
+        <Tabs.Screen name="records" options={{ title: 'Records', tabBarLabel: ({ color, focused }) => <TabLabel title="Records" color={color} focused={focused} activeColor={colors.green} />, tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'people' : 'people-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
+        <Tabs.Screen name="notes" options={{ title: 'Notes', tabBarAccessibilityLabel: 'Create a note', tabBarLabel: ({ color, focused }) => <TabLabel title="Notes" color={color} focused={focused} activeColor={colors.green} />, tabBarIcon: () => <View style={[splashStyles.createTab, { backgroundColor: colors.green, borderColor: colors.surface }]}><Ionicons name="add" color="#FFFFFF" size={30} /></View> }} />
+        <Tabs.Screen name="plan" options={{ title: 'Personal', tabBarLabel: ({ color, focused }) => <TabLabel title="Personal" color={color} focused={focused} activeColor={colors.green} />, tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'book' : 'book-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
+        <Tabs.Screen name="settings" options={{ title: 'Settings', tabBarLabel: ({ color, focused }) => <TabLabel title="Settings" color={color} focused={focused} activeColor={colors.green} />, tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'settings' : 'settings-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
         <Tabs.Screen name="calendar" options={{ href: null }} />
         <Tabs.Screen name="activity" options={{ href: null }} />
         <Tabs.Screen name="reports" options={{ href: null }} />
@@ -127,6 +134,13 @@ function AppTabs() {
   </TrackerProvider>;
 }
 
+function TabLabel({ title, color, focused, activeColor }: { title: string; color: ColorValue; focused: boolean; activeColor: string }) {
+  return <View style={tabBarStyles.labelWrap}>
+    <Text style={[tabBarStyles.label, { color }]} numberOfLines={1}>{title}</Text>
+    <View style={[tabBarStyles.activeMark, { backgroundColor: focused ? activeColor : 'transparent', opacity: focused ? 1 : 0 }]} />
+  </View>;
+}
+
 export default function RootLayout() {
   return <SafeAreaProvider><AppThemeProvider><AppTabs /></AppThemeProvider></SafeAreaProvider>;
 }
@@ -136,7 +150,13 @@ const splashStyles = StyleSheet.create({
   image: { width: 146, height: 146 },
   appName: { marginTop: 22, color: '#FFFFFF', fontSize: 23, fontWeight: '700', letterSpacing: 0.2 },
   tagline: { marginTop: 6, color: '#D7E7DD', fontSize: 12, fontWeight: '500', letterSpacing: 0.4 },
-  createTab: { width: 50, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center', borderWidth: 3, marginTop: -10, elevation: 8, shadowColor: '#101813', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.18, shadowRadius: 4, zIndex: 2 },
+  createTab: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', borderWidth: 3, marginTop: -15, elevation: 10, shadowColor: '#315E4B', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.34, shadowRadius: 9, zIndex: 2 },
 });
 
 const tabButtonStyles = StyleSheet.create({ touchHalo: { position: 'absolute', top: '50%', left: '50%' } });
+const tabBarStyles = StyleSheet.create({
+  glassPill: { position: 'absolute', borderRadius: 30, borderWidth: 1, elevation: 16, shadowColor: '#101813', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.2, shadowRadius: 12 },
+  labelWrap: { minHeight: 27, alignItems: 'center', justifyContent: 'flex-start' },
+  label: { fontSize: 10, fontWeight: '600', lineHeight: 14 },
+  activeMark: { width: 22, height: 3, borderRadius: 2, marginTop: 4 },
+});
