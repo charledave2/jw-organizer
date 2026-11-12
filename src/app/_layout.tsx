@@ -19,19 +19,9 @@ import { GoogleSans_700Bold } from '@expo-google-fonts/google-sans/700Bold';
 
 void SplashScreen.preventAutoHideAsync();
 
-function CenteredTabButton({ children, highlightColor, onPress, onPressIn, onPressOut, accessibilityLabel, ...props }: any) {
-  const haloScale = useRef(new Animated.Value(0.75)).current;
+function CreateNoteTabButton({ children, onPress, onPressIn, onPressOut, accessibilityLabel, ...props }: any) {
   const iconScale = useRef(new Animated.Value(1)).current;
   const iconLift = useRef(new Animated.Value(0)).current;
-  const isCreateButton = accessibilityLabel === 'Create a note';
-  const animatePress = (pressed: boolean) => {
-    Animated.parallel([
-      Animated.spring(haloScale, { toValue: pressed ? 1 : 0.75, damping: 13, stiffness: 260, useNativeDriver: true }),
-      ...(isCreateButton ? [
-        Animated.spring(iconScale, { toValue: pressed ? 0.88 : 1, damping: 8, stiffness: 300, useNativeDriver: true }),
-      ] : []),
-    ]).start();
-  };
   const animateCreateTap = () => {
     iconLift.stopAnimation();
     iconScale.stopAnimation();
@@ -51,11 +41,8 @@ function CenteredTabButton({ children, highlightColor, onPress, onPressIn, onPre
     ]),
     ]).start();
   };
-  return <Pressable {...props} accessibilityLabel={accessibilityLabel} onPress={(event: any) => { onPress?.(event); if (isCreateButton) animateCreateTap(); }} onPressIn={(event: any) => { onPressIn?.(event); animatePress(true); }} onPressOut={(event: any) => { onPressOut?.(event); animatePress(false); }}>
-    <Animated.View pointerEvents="none" style={[tabButtonStyles.touchHalo, { backgroundColor: highlightColor, opacity: props.accessibilityState?.selected ? 1 : 0, width: isCreateButton ? 58 : 34, height: isCreateButton ? 58 : 34, borderRadius: isCreateButton ? 29 : 17, marginLeft: isCreateButton ? -29 : -17, marginTop: isCreateButton ? -25 : -17, transform: [{ scale: haloScale }] }]} />
-    <Animated.View style={isCreateButton ? { transform: [{ translateY: iconLift }, { scale: iconScale }] } : undefined}>
-      {typeof children === 'function' ? children({ pressed: false }) : children}
-    </Animated.View>
+  return <Pressable {...props} accessibilityLabel={accessibilityLabel} onPress={(event: any) => { onPress?.(event); animateCreateTap(); }} onPressIn={onPressIn} onPressOut={onPressOut}>
+    <Animated.View style={{ transform: [{ translateY: iconLift }, { scale: iconScale }] }}>{typeof children === 'function' ? children({ pressed: false }) : children}</Animated.View>
   </Pressable>;
 }
 
@@ -118,13 +105,12 @@ function AppTabs() {
           }]} />
         </View>,
         tabBarHideOnKeyboard: true,
-        tabBarButton: (props) => <CenteredTabButton {...props} highlightColor={colors.greenSoft} />,
       }}>
-        <Tabs.Screen name="index" options={{ title: 'Home', tabBarAccessibilityLabel: 'Home', tabBarLabel: ({ color, focused }) => <TabLabel title="Home" color={color} focused={focused} activeColor={colors.green} />, tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'home' : 'home-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
-        <Tabs.Screen name="records" options={{ title: 'Records', tabBarLabel: ({ color, focused }) => <TabLabel title="Records" color={color} focused={focused} activeColor={colors.green} />, tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'people' : 'people-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
-        <Tabs.Screen name="notes" options={{ title: 'Notes', tabBarAccessibilityLabel: 'Create a note', tabBarLabel: ({ color, focused }) => <TabLabel title="Notes" color={color} focused={focused} activeColor={colors.green} />, tabBarIcon: () => <View style={[splashStyles.createTab, { backgroundColor: colors.green, borderColor: colors.surface }]}><Ionicons name="add" color="#FFFFFF" size={30} /></View> }} />
-        <Tabs.Screen name="plan" options={{ title: 'Personal', tabBarLabel: ({ color, focused }) => <TabLabel title="Personal" color={color} focused={focused} activeColor={colors.green} />, tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'book' : 'book-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
-        <Tabs.Screen name="settings" options={{ title: 'Settings', tabBarLabel: ({ color, focused }) => <TabLabel title="Settings" color={color} focused={focused} activeColor={colors.green} />, tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'settings' : 'settings-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /> }} />
+        <Tabs.Screen name="index" options={{ title: 'Home', tabBarAccessibilityLabel: 'Home', tabBarLabel: ({ color, focused }) => <TabLabel title="Home" color={color} focused={focused} activeColor={colors.green} />, tabBarIcon: ({ color, size, focused }) => <TabIcon focused={focused} activeColor={colors.greenSoft}><Ionicons name={focused ? 'home' : 'home-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /></TabIcon> }} />
+        <Tabs.Screen name="records" options={{ title: 'Records', tabBarLabel: ({ color, focused }) => <TabLabel title="Records" color={color} focused={focused} activeColor={colors.green} />, tabBarIcon: ({ color, size, focused }) => <TabIcon focused={focused} activeColor={colors.greenSoft}><Ionicons name={focused ? 'people' : 'people-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /></TabIcon> }} />
+        <Tabs.Screen name="notes" options={{ title: 'Notes', tabBarButton: (props) => <CreateNoteTabButton {...props} />, tabBarAccessibilityLabel: 'Create a note', tabBarLabel: ({ color, focused }) => <TabLabel title="Notes" color={color} focused={focused} activeColor={colors.green} />, tabBarIcon: () => <View style={[splashStyles.createTab, { backgroundColor: colors.green, borderColor: colors.surface }]}><Ionicons name="add" color="#FFFFFF" size={30} /></View> }} />
+        <Tabs.Screen name="plan" options={{ title: 'Personal', tabBarLabel: ({ color, focused }) => <TabLabel title="Personal" color={color} focused={focused} activeColor={colors.green} />, tabBarIcon: ({ color, size, focused }) => <TabIcon focused={focused} activeColor={colors.greenSoft}><Ionicons name={focused ? 'book' : 'book-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /></TabIcon> }} />
+        <Tabs.Screen name="settings" options={{ title: 'Settings', tabBarLabel: ({ color, focused }) => <TabLabel title="Settings" color={color} focused={focused} activeColor={colors.green} />, tabBarIcon: ({ color, size, focused }) => <TabIcon focused={focused} activeColor={colors.greenSoft}><Ionicons name={focused ? 'settings' : 'settings-outline'} color={typeof color === 'string' ? color : colors.muted} size={size} /></TabIcon> }} />
         <Tabs.Screen name="calendar" options={{ href: null }} />
         <Tabs.Screen name="activity" options={{ href: null }} />
         <Tabs.Screen name="reports" options={{ href: null }} />
@@ -137,9 +123,20 @@ function AppTabs() {
 }
 
 function TabLabel({ title, color, focused, activeColor }: { title: string; color: ColorValue; focused: boolean; activeColor: string }) {
+  const mark = useRef(new Animated.Value(focused ? 1 : 0)).current;
+  useEffect(() => { Animated.spring(mark, { toValue: focused ? 1 : 0, damping: 15, stiffness: 240, useNativeDriver: true }).start(); }, [focused, mark]);
   return <View style={tabBarStyles.labelWrap}>
     <Text style={[tabBarStyles.label, { color }]} numberOfLines={1}>{title}</Text>
-    <View style={tabBarStyles.activeMarkTrack}><Animated.View style={[tabBarStyles.activeMark, { backgroundColor: activeColor, transform: [{ scale: focused ? 1 : 0 }] }]} /></View>
+    <View style={tabBarStyles.activeMarkTrack}><Animated.View style={[tabBarStyles.activeMark, { backgroundColor: activeColor, transform: [{ scale: mark }] }]} /></View>
+  </View>;
+}
+
+function TabIcon({ focused, activeColor, children }: { focused: boolean; activeColor: string; children: React.ReactNode }) {
+  const selected = useRef(new Animated.Value(focused ? 1 : 0)).current;
+  useEffect(() => { Animated.spring(selected, { toValue: focused ? 1 : 0, damping: 14, stiffness: 220, useNativeDriver: true }).start(); }, [focused, selected]);
+  return <View style={tabBarStyles.iconFrame}>
+    <Animated.View pointerEvents="none" style={[tabBarStyles.iconBubble, { backgroundColor: activeColor, opacity: selected, transform: [{ scale: selected.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] }) }] }]} />
+    {children}
   </View>;
 }
 
@@ -155,11 +152,12 @@ const splashStyles = StyleSheet.create({
   createTab: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', borderWidth: 3, marginTop: -15, elevation: 10, shadowColor: '#315E4B', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.34, shadowRadius: 9, zIndex: 2 },
 });
 
-const tabButtonStyles = StyleSheet.create({ touchHalo: { position: 'absolute', top: '50%', left: '50%' } });
 const tabBarStyles = StyleSheet.create({
   glassPill: { position: 'absolute', borderRadius: 30, borderWidth: 1, elevation: 16, shadowColor: '#101813', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.2, shadowRadius: 12 },
   labelWrap: { minHeight: 27, alignItems: 'center', justifyContent: 'flex-start' },
   label: { fontSize: 10, fontWeight: '600', lineHeight: 14 },
   activeMarkTrack: { width: 22, height: 4, marginTop: 4, alignItems: 'center', justifyContent: 'center' },
   activeMark: { width: 6, height: 4, borderRadius: 3 },
+  iconFrame: { width: 36, height: 34, alignItems: 'center', justifyContent: 'center' },
+  iconBubble: { position: 'absolute', width: 34, height: 34, borderRadius: 17 },
 });
